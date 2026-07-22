@@ -1,0 +1,6 @@
+obj/
+rebootc
+*.o
+*.out
+*.dat
+*.log
