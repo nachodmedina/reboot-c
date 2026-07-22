@@ -20,7 +20,9 @@ void turnoEnemigo(Enemigo *atacante, Personaje *objetivo) {
 }
 
 void iniciarCombate(Personaje equipo[], int cantPersonajes, Enemigo enemigos[], int cantEnemigos) {
-    // TODO: implementar el bucle de turnos completo (orden, condiciones de victoria/derrota).
+    // TODO: implementar el bucle de turnos completo (orden, condiciones de victoria/derrota). 
+
+    //nacho puto
     (void) equipo;
     (void) cantPersonajes;
     (void) enemigos;
