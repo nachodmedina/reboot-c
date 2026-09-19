@@ -15,8 +15,17 @@ typedef struct {
     int magnitud;
 } Estado;
 
+typedef enum {
+    HABILIDAD_NINGUNA,          // todavia no desbloqueo su habilidad
+    HABILIDAD_CRITICO_GRUPAL,   // Isaac
+    HABILIDAD_DEFENSA_GRUPAL,   // Dante
+    HABILIDAD_CURACION_GRUPAL   // Frieren
+} TipoHabilidadEspecial;
+
 typedef struct {
     char nombre[30];
+    char arma[30];
+    TipoHabilidadEspecial habilidadEspecial;
     int vida;
     int vidaMax;
     int defensa;
@@ -25,8 +34,7 @@ typedef struct {
 } Personaje;
 
 // Crea un personaje jugable con sus stats iniciales.
-Personaje crearPersonaje(const char *nombre, int vidaMax, int defensa, int ataque);
-
+Personaje crearPersonaje(const char *nombre, const char *arma, TipoHabilidadEspecial habilidad, int vidaMax, int defensa, int ataque);
 // Muestra por consola los datos actuales del personaje.
 void mostrarPersonaje(const Personaje *personaje);
 

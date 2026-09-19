@@ -19,7 +19,7 @@ void limpiarBufferEntrada(void) {
 }
 
 void pausar(void) {
-    printf("Presione Enter para continuar...");
+    printf("...");
     limpiarBufferEntrada();
 }
 

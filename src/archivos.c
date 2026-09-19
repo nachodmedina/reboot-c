@@ -28,6 +28,15 @@ int cargarPartida(Personaje equipo[], int cantPersonajes) {
     return 0;
 }
 
+void eliminarPartida(void) {
+    // remove() esta declarada en <stdio.h> (la misma libreria de fopen/fclose).
+    // Recibe el nombre del archivo y lo borra del disco.
+    // Devuelve 0 si pudo borrarlo, y un valor distinto de 0 si hubo un error
+    // (por ejemplo, si el archivo no existia).
+    if (remove(ARCHIVO_PARTIDA) == 0) {
+        registrarLog("Partida eliminada (modo dificil)");
+    }
+}
 void registrarLog(const char *mensaje) {
     FILE *archivo = fopen(ARCHIVO_LOG, "a");
     if (archivo == NULL) {

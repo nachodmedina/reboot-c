@@ -2,10 +2,13 @@
 #include <string.h>
 #include "../include/personajes.h"
 
-Personaje crearPersonaje(const char *nombre, int vidaMax, int defensa, int ataque) {
+Personaje crearPersonaje(const char *nombre, const char *arma, TipoHabilidadEspecial habilidad, int vidaMax, int defensa, int ataque) {
     Personaje personaje;
     strncpy(personaje.nombre, nombre, sizeof(personaje.nombre) - 1);
     personaje.nombre[sizeof(personaje.nombre) - 1] = '\0';
+    strncpy(personaje.arma, arma, sizeof(personaje.arma) - 1);
+    personaje.arma[sizeof(personaje.arma) - 1] = '\0';
+    personaje.habilidadEspecial = habilidad;
     personaje.vida = vidaMax;
     personaje.vidaMax = vidaMax;
     personaje.defensa = defensa;
@@ -18,8 +21,8 @@ Personaje crearPersonaje(const char *nombre, int vidaMax, int defensa, int ataqu
 
 void mostrarPersonaje(const Personaje *personaje) {
     // TODO: mejorar formato de impresion cuando este definido el combate.
-    printf("%s - Vida: %d/%d - Ataque: %d - Defensa: %d\n",
-           personaje->nombre, personaje->vida, personaje->vidaMax,
+    printf("%s (%s) - Vida: %d/%d - Ataque: %d - Defensa: %d\n",
+           personaje->nombre, personaje->arma, personaje->vida, personaje->vidaMax,
            personaje->ataque, personaje->defensa);
 }
 
