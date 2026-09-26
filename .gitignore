@@ -1,6 +1,8 @@
 obj/
-rebootc
+reboot_c
+*.exe
 *.o
 *.out
 *.dat
 *.log
+.vscode/

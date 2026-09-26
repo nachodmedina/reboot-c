@@ -112,9 +112,9 @@ static void nuevaPartida(void) {
 
     
     Personaje equipo[CANT_PERSONAJES];
-    equipo[0] = crearPersonaje("Isaac", "Espada larga", HABILIDAD_CRITICO_GRUPAL,  30, 4, 8);
-    equipo[1] = crearPersonaje("Dante", "Lanza de guerra", HABILIDAD_DEFENSA_GRUPAL, 35, 6, 6);
-    equipo[2] = crearPersonaje("Frieren", "Baston magico", HABILIDAD_CURACION_GRUPAL, 25, 3, 10);
+    equipo[0] = crearPersonaje("Isaac", "Excalibur", HABILIDAD_CRITICO_GRUPAL,  320, 40, 80);
+    equipo[1] = crearPersonaje("Dante", "Lanza ", HABILIDAD_DEFENSA_GRUPAL, 320, 40, 80);
+    equipo[2] = crearPersonaje("Frieren", "Baston magico", HABILIDAD_CURACION_GRUPAL, 320, 40, 80);
 
     int protagonista = seleccionarPersonajeInicial(equipo, CANT_PERSONAJES);
     mostrarNarrativaInicial(&equipo[protagonista]);

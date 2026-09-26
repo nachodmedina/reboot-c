@@ -27,18 +27,22 @@ void mostrarIntroduccionMundo(void) {
     printf("===================================\n\n");
 
     // --- Bloque 1 ---
-    printf("Año 2526. La humanidad lleva cincuenta anios combatiendo a las maquinas.\n");
-    printf("Cincuenta anios desde que la superficie dejo de ser un lugar seguro para vivir.\n\n");
+    printf("Año 2076. La humanidad lleva medio siglo combatiendo contra  las maquinas.\n");
+    printf("Medio siglo desde que la superficie dejo de ser un lugar seguro para vivir.\n\n");
+
     printf("Los pocos que sobrevivieron encontraron refugio bajo tierra, en los tuneles\n");
-    printf("de Raiz, el ultimo asentamiento humano del que se tiene noticia.\n");
+    printf("de La Raiz, el ultimo asentamiento humano del que se tiene noticia.\n");
+    printf("Alli abajo, creian estar a salvo.\n");
     pausar();
 
     // --- Bloque 2 ---
     printf("\nEsta noche, esa certeza tambien se rompio.\n\n");
-    printf("Las alarmas de Raiz no suenan desde hace anios. Hoy suenan, y no dejan\n");
-    printf("de sonar. Las maquinas encontraron la entrada.\n");
-    printf("Comienza una batalla para defender raiz, \n");
-    printf("pero rapidamente lo humanos pierden\n");
+    printf("Las alarmas de La Raiz, enmudecidas durante decadas, han despertado.\n");
+    printf("Hoy chillan, y no dejan de sonar. Las maquinas han logrado infiltrarse.\n\n");;
+    printf("Comienza una batalla desesperada para defender los tuneles,\n");
+    printf("pero la resistencia humana es aplastada casi de inmediato.\n");
+    printf("El acero y el fuego arrasan con las defensas. \n");
+    printf("Algunos son masacrados. Los demas... son arrastrados a la oscuridad como prisioneros.\n");
     pausar();
 }
 
@@ -51,18 +55,18 @@ static const char *textoHabilidadDesbloqueada(TipoHabilidadEspecial habilidad) {
         case HABILIDAD_CRITICO_GRUPAL:
             return "El filo, gastado hasta hace un momento, ahora tiene un borde que no\n"
                    "parece de este siglo. Isaac entiende, sin que nadie se lo explique,\n"
-                   "que ya no golpea solo por si mismo -- puede hacer que todo el equipo\n"
-                   "golpee mas certero.\n";
+                   "que su instinto asesino se ha afilado: su proximo golpe sera letal,\n"
+                   "y cuando encuentre a los demas, podra guiarlos para hacer lo mismo.\n";
         case HABILIDAD_DEFENSA_GRUPAL:
             return "La lanza vieja, curtida de tantos entrenamientos sin gracia, ahora\n"
-                   "responde con un peso distinto. Dante siente que puede interponerla\n"
-                   "no solo entre un golpe y el, sino entre un golpe y todo el que tenga\n"
-                   "cerca.\n";
+                   "responde con un peso distinto. Dante siente que su guardia es\n"
+                   "impenetrable, un escudo absoluto capaz de protegerlo a el hoy,\n"
+                   "y a todo su equipo mañana.\n";
         case HABILIDAD_CURACION_GRUPAL:
             return "El baston desgastado, el mismo que cargo siempre sin saber por que,\n"
-                   "empieza a vibrar con algo que no sabe nombrar todavia, pero que\n"
-                   "reconoce: ya no es solo un baston. Es algo hecho para sostener a\n"
-                   "los demas.\n";
+                   "empieza a vibrar con una calidez que no sabe nombrar todavia, pero que\n"
+                   "reconoce. Es magia antigua, pura vida fluyendo por sus manos para\n"
+                   "sanar sus propias heridas y sostener a los que aun lo necesiten.\n";
         case HABILIDAD_NINGUNA:
         default:
             // Caso general: por si en el futuro se agrega un personaje sin
@@ -75,32 +79,45 @@ static const char *textoHabilidadDesbloqueada(TipoHabilidadEspecial habilidad) {
 // baliza, y la transformacion del arma segun el personaje elegido.
 void mostrarNarrativaInicial(const Personaje *personaje) {
     // --- Bloque 3: la separacion ---
-    printf("\nEn el caos de la batalla, %s queda separado del resto. No hay\n",
+    printf("\nEn el caos de la batalla, %s queda separado del resto.\n",
            personaje->nombre);
-    printf("tiempo para buscar a nadie: solo para correr, y esperar volver a\n");
-    printf("encontrarlos con vida.\n");
+    printf("No hay tiempo para ayudar a nadie: solo para correr, y esperar a encontrar otros sobrevivientes\n");
+    printf("el sonido de los engranajes y el fuego enemigo lo obligan a buscar refugio entre las ruinas.\n");
     pausar();
 
     // --- Bloque 4: el hallazgo del arma comun + la baliza ---
-    printf("\nLas ruinas cercanas a Raiz no son ruinas cualquiera. %s todavia lleva su\n",
-           personaje->nombre);
-    printf("%s  la misma que entreno dentro del refugio, gastada, sin nada de\n",
-           personaje->arma);
-    printf("especial. La unica que tuvo a mano cuando sonaron las alarmas.\n\n");
-    printf("Entre los escombros, algo distinto: un dispositivo pequenio, cubierto\n");
-    printf("de polvo de siglos. Al tocarlo, se enciende. No dice mucho, todavia.\n");
-    printf("Pero es suficiente para saber que esta guerra ya paso antes.\n");
+    printf("\n\nAl adentrarse en la oscuridad, la respiracion de se detiene.\n");
+    printf("Frente a el se alza una enorme compuerta de metal oscuro, cubierta de\n");
+    printf("inscripciones de una era olvidada. La puerta cede con un gemido pesado...\n\n");
+    printf("En el centro de la sala, un pilar monolitico pulsa con una luz violeta.\n");
+    printf("\n %s Al acercarse y apoyar su mano, el pilar estalla en un relampago silencioso.\n",
+            personaje->nombre);
+    printf("Visiones invaden la mente de %s:\n\n", personaje->nombre);
+
+    printf("  > Ciudades enteras consumidas por el fuego...\n");
+    printf("  > Ejercitos antiguos cayendo ante legiones de maquinas...\n");
+    printf("  > Y en el centro de la masacre, un guerrero empunando tu %s,\n", personaje->arma);
+    printf("    pero brillando con un poder absoluto y devastador.\n\n");
+    
+    printf("Las visiones colapsan de golpe dejandote sin aliento.\n");
+    pausar();
+    printf("\nEl pilar libera un latido de energia pura que impacta de lleno en tu %s.\n", 
+        personaje->arma);
+    printf(" %s observa como su %s comienza a transformarse y a parecerse a el arma que le mostro la baliza\n",
+            personaje->nombre, personaje->arma);
+    printf("El acero oxidado de la vieja arma tembló\n");
+    printf("El óxido y la sangre seca se desprendieron en el aire como cenizas arrastradas por un viento invisible, \n");
+    printf("revelando una superficie que ya no era hierro, sino un cristal oscuro y perfecto que devoraba la luz del entorno.\n");
+    printf("El peso del arma cambió drásticamente, volviéndose ligera como una pluma pero anclada al brazo como una extensión misma de su alma\n");
+    printf("Las muescas de mil batallas pasadas se fundieron, retorciéndose hasta formar runas grabadas a fuego blanco a lo largo del arma\n\n");
+
+    printf("La sala entera vibra por el zumbido del arma despertando.\n");
+    printf("Una leyenda acaba de renacer.\n");
     pausar();
 
-    // --- Bloque 5: la transformacion del arma ---
-    printf("\nUn pulso de luz salta de la baliza directo hacia %s. Por un instante,\n",
-           personaje->arma);
-    printf("%s ve fragmentos que no son suyos: manos distintas, sosteniendo la\n",
-           personaje->nombre);
-    printf("misma arma -ya transformada- en batallas que no vivio. Cuando la\n");
-    printf("vision termina, %s ya no es la misma: el metal comun dejo lugar a\n",
-           personaje->arma);
-    printf("algo que reconoce sin haberlo visto nunca.\n\n");
+    
+    
+    
 
     // Texto especifico de la habilidad que desbloquea cada personaje.
     printf("%s", textoHabilidadDesbloqueada(personaje->habilidadEspecial));
