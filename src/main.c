@@ -112,22 +112,44 @@ static void nuevaPartida(void) {
 
     
     Personaje equipo[CANT_PERSONAJES];
-    equipo[0] = crearPersonaje("Isaac", "Espada de Excabilur", HABILIDAD_CRITICO_GRUPAL,  30, 4, 8);
-    equipo[1] = crearPersonaje("Dante", "Lanza de Rebellion", HABILIDAD_DEFENSA_GRUPAL, 35, 6, 6);
-    equipo[2] = crearPersonaje("Frieren", "Baston de la Perdida", HABILIDAD_CURACION_GRUPAL, 25, 3, 10);
+    equipo[0] = crearPersonaje("Isaac", "Espada de Excabilur", HABILIDAD_CRITICO_GRUPAL,  320, 40, 80);
+    equipo[1] = crearPersonaje("Dante", "Lanza de Rebellion", HABILIDAD_DEFENSA_GRUPAL, 320, 40, 80);
+    equipo[2] = crearPersonaje("Frieren", "Baston de la Perdida", HABILIDAD_CURACION_GRUPAL, 320, 40, 80);
 
     int protagonista = seleccionarPersonajeInicial(equipo, CANT_PERSONAJES);
     mostrarNarrativaInicial(&equipo[protagonista]);
+    mostrarSalidaDeRaiz(&equipo[protagonista]);
+   
 
-    printf("Equipo inicial:\n");
-    for (int i = 0; i < CANT_PERSONAJES; i++) {
-        mostrarPersonaje(&equipo[i]);
-    }
+    Zona campoCeniza = crearZona(
+        "Campo Ceniza",
+        "Lo que fue un pueblo agricola es hoy tierra quemada, vigilada por\n"
+        "cazadores al servicio de las maquinas y sus perros mecanicos.",
+        1
+    );
+    mostrarEntradaZona(&campoCeniza);
 
+    
+    
+    printf("Tu personaje:\n");
+    mostrarPersonaje(&equipo[protagonista]);
+
+
+
+
+    
+    
     guardarPartida(equipo, CANT_PERSONAJES);
     printf("\nPartida nueva creada y guardada (modulo de juego en construccion).\n");
     pausar();
+
+
+
+
 }
+
+
+
 
 // TODO: una vez cargado el equipo, retomar la zona/historia donde quedo.
 static void cargarPartidaExistente(void) {

@@ -29,4 +29,14 @@ void mostrarIntroduccionMundo(void);
 // personaje.
 void mostrarNarrativaInicial(const Personaje *personaje);
 
+
+
+// La baliza empieza a guiar el camino y arranca el viaje: se muestra
+// despues de mostrarNarrativaInicial, antes de entrar a la primera zona.
+void mostrarSalidaDeRaiz(const Personaje *personaje);
+ 
+// Muestra el cartel de entrada a una zona nueva (nombre + descripcion),
+// usando los datos de la struct Zona.
+void mostrarEntradaZona(const Zona *zona);
+
 #endif

@@ -86,11 +86,12 @@ void mostrarNarrativaInicial(const Personaje *personaje) {
     pausar();
 
     // --- Bloque 4: el hallazgo del arma comun + la baliza ---
-    printf("\n\nAl adentrarse en la oscuridad, la respiracion de se detiene.\n");
+    printf("\n\nAl adentrarse en la oscuridad, la respiracion de %s se detiene.\n",
+            personaje->nombre);
     printf("Frente a el se alza una enorme compuerta de metal oscuro, cubierta de\n");
     printf("inscripciones de una era olvidada. La puerta cede con un gemido pesado...\n\n");
     printf("En el centro de la sala, un pilar monolitico pulsa con una luz violeta.\n");
-    printf("\n %s Al acercarse y apoyar su mano, el pilar estalla en un relampago silencioso.\n",
+    printf("%s Al acercarse y apoyar su mano, el pilar estalla en un relampago silencioso.\n",
             personaje->nombre);
     printf("Visiones invaden la mente de %s:\n\n", personaje->nombre);
 
@@ -101,9 +102,8 @@ void mostrarNarrativaInicial(const Personaje *personaje) {
     
     printf("Las visiones colapsan de golpe dejandote sin aliento.\n");
     pausar();
-    printf("\nEl pilar libera un latido de energia pura que impacta de lleno en tu %s.\n", 
-        personaje->arma);
-    printf(" %s observa como su %s comienza a transformarse y a parecerse a el arma que le mostro la baliza\n",
+    printf("\nEl pilar libera un latido de energia pura que impacta de lleno en tu arma.\n");
+    printf("%s observa como su %s comienza a transformarse y a parecerse a el arma que le mostro la baliza\n",
             personaje->nombre, personaje->arma);
     printf("El acero oxidado de la vieja arma tembló\n");
     printf("El óxido y la sangre seca se desprendieron en el aire como cenizas arrastradas por un viento invisible, \n");
@@ -115,11 +115,42 @@ void mostrarNarrativaInicial(const Personaje *personaje) {
     printf("Una leyenda acaba de renacer.\n");
     pausar();
 
-    
-    
-    
+    printf("Arma conseguido  %s  !! \n", personaje->arma);
 
     // Texto especifico de la habilidad que desbloquea cada personaje.
     printf("%s", textoHabilidadDesbloqueada(personaje->habilidadEspecial));
+    pausar();
+}
+
+// La baliza empieza a guiar el camino: se acaba la posibilidad de volver a
+// Raiz, y arranca el viaje hacia la primera zona. Depende del nombre del
+// personaje, por eso recibe el puntero.
+void mostrarSalidaDeRaiz(const Personaje *personaje) {
+    printf("\nCon el arma transformada en su mano, %s siente algo mas: la baliza,\n",
+           personaje->nombre);
+    printf("antes silenciosa, ahora vibra con un pulso constante, como si supiera\n");
+    printf("exactamente hacia donde hay que ir.\n\n");
+    printf("un pequeño pedazo de la baliza se deprende y se posa en tu mano,");
+    printf("ahora esta pequeña baliza proyecta una luz tenua hacia la salida de las ruinas,\n");
+    printf("marcando un camino que %s no habia visto antes.\n", personaje->nombre);
+    pausar();
+
+    printf("\nRegresar a Raiz ya no es una opcion. Lo que quedaba del refugio esta\n");
+    printf("en manos de las maquinas, y no hay señal de que nadie mas haya sobrevivido...\n");
+    printf("todavia.\n\n");
+    printf("%s respira hondo, aferra el arma, y sigue la luz de la baliza hacia\n",
+           personaje->nombre);
+    printf("la superficie. El viaje recien empieza.\n");
+    pausar();
+}
+
+// Muestra el "cartel" de entrada a una zona nueva, usando directamente los
+// datos de la struct Zona (nombre y descripcion) en vez de textos sueltos
+// escritos a mano en cada lugar donde se entra a una zona.
+void mostrarEntradaZona(const Zona *zona) {
+    printf("\n=======================================\n");
+    printf("  ENTRASTE A LA ZONA: %s\n", zona->nombre);
+    printf("=========================================\n\n");
+    printf("%s\n", zona->descripcion);
     pausar();
 }
