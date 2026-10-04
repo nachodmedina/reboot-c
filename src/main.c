@@ -3,6 +3,8 @@
 #include "../include/historia.h"
 #include "../include/utils.h"
 #include "../include/archivos.h"
+#include "../include/combate.h"
+#include "../include/items.h"
 
 #define CANT_PERSONAJES 3
 
@@ -16,6 +18,8 @@ static int seleccionarPersonajeInicial(const Personaje equipo[], int cantPersona
 static void nuevaPartida(void);
 static void cargarPartidaExistente(void);
 static void mostrarMenuPrincipal(void);
+static void crearEquipo(Personaje equipo[]);
+static void probarCombate(void);
 
 // ============================================================
 // FUNCION PRINCIPAL: al leer el archivo de arriba hacia abajo,
@@ -28,7 +32,7 @@ int main(void) {
     int opcion;
     do {
         mostrarMenuPrincipal();
-        opcion = leerOpcionMenu(1, 3);
+        opcion = leerOpcionMenu(1, 4);
 
         switch (opcion) {
             case 1:
@@ -39,6 +43,9 @@ int main(void) {
                 break;
             case 3:
                 printf("\nHasta la proxima.\n");
+                break;
+            case 4:
+                probarCombate();
                 break;
         }
     } while (opcion != 3);
@@ -56,7 +63,79 @@ static void mostrarMenuPrincipal(void) {
     printf("1. Nueva partida\n");
     printf("2. Cargar partida\n");
     printf("3. Salir\n");
+    printf("4. Probar combate (temporal)\n");
     printf("Elija una opcion: ");
+}
+
+static void crearEquipo(Personaje equipo[]) {
+    equipo[0] = crearPersonaje("Isaac", "Espada de Excabilur", HABILIDAD_CRITICO_GRUPAL,  320, 40, 80);
+    equipo[1] = crearPersonaje("Dante", "Lanza de Rebellion", HABILIDAD_DEFENSA_GRUPAL, 320, 40, 80);
+    equipo[2] = crearPersonaje("Frieren", "Baston de la Perdida", HABILIDAD_CURACION_GRUPAL, 320, 40, 80);
+}
+
+// TEMPORAL: combate de prueba con las fases de Zona 1, hasta conectar la zona real.
+static void probarCombate(void) {
+    Personaje equipo[CANT_PERSONAJES];
+    crearEquipo(equipo);
+
+    printf("\n1. Pelear con un solo personaje\n");
+    printf("2. Pelear con el equipo completo\n");
+    printf("Elija una opcion: ");
+    int cantPersonajes = 1;
+    Personaje luchadores[CANT_PERSONAJES];
+    if (leerOpcionMenu(1, 2) == 1) {
+        luchadores[0] = equipo[seleccionarPersonajeInicial(equipo, CANT_PERSONAJES)];
+    } else {
+        cantPersonajes = CANT_PERSONAJES;
+        for (int i = 0; i < CANT_PERSONAJES; i++) {
+            luchadores[i] = equipo[i];
+        }
+    }
+
+    Enemigo centinela = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
+    Enemigo cazador = crearEnemigo("Cazador de Campo Ceniza", HABILIDAD_ENEMIGO_TRAMPA, 160, 16, 56);
+    Enemigo spectre = crearEnemigo("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
+
+    printf("\nElegi la fase de Zona 1:\n");
+    printf("1. Fase 1: 2 Centinela Canino\n");
+    printf("2. Fase 2: 1 Cazador de Campo Ceniza\n");
+    printf("3. Fase 3: 1 Cazador + 2 Centinela\n");
+    printf("4. Fase 4 (jefe): Cazador + Spectre\n");
+    printf("Elija una opcion: ");
+
+    Enemigo enemigos[3];
+    int cantEnemigos = 0;
+    switch (leerOpcionMenu(1, 4)) {
+        case 1:
+            enemigos[0] = centinela;
+            enemigos[1] = centinela;
+            cantEnemigos = 2;
+            break;
+        case 2:
+            enemigos[0] = cazador;
+            cantEnemigos = 1;
+            break;
+        case 3:
+            enemigos[0] = cazador;
+            enemigos[1] = centinela;
+            enemigos[2] = centinela;
+            cantEnemigos = 3;
+            break;
+        case 4:
+            enemigos[0] = cazador;
+            enemigos[1] = spectre;
+            cantEnemigos = 2;
+            break;
+    }
+
+    Inventario *inventario = crearInventario(2);
+    Item pocion = { ITEM_VIDA, 100, 0 };
+    agregarItem(inventario, pocion);
+    agregarItem(inventario, pocion);
+
+    iniciarCombate(luchadores, cantPersonajes, enemigos, cantEnemigos, inventario);
+    liberarInventario(inventario);
+    pausar();
 }
 
 // Muestra el menu de dificultad y devuelve el modo que eligio el jugador.
@@ -112,9 +191,7 @@ static void nuevaPartida(void) {
 
     
     Personaje equipo[CANT_PERSONAJES];
-    equipo[0] = crearPersonaje("Isaac", "Espada de Excabilur", HABILIDAD_CRITICO_GRUPAL,  320, 40, 80);
-    equipo[1] = crearPersonaje("Dante", "Lanza de Rebellion", HABILIDAD_DEFENSA_GRUPAL, 320, 40, 80);
-    equipo[2] = crearPersonaje("Frieren", "Baston de la Perdida", HABILIDAD_CURACION_GRUPAL, 320, 40, 80);
+    crearEquipo(equipo);
 
     int protagonista = seleccionarPersonajeInicial(equipo, CANT_PERSONAJES);
     mostrarNarrativaInicial(&equipo[protagonista]);
