@@ -1,5 +1,6 @@
 obj/
 reboot_c
+test_combate
 *.exe
 *.o
 *.out
