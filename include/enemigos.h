@@ -3,8 +3,15 @@
 
 #include "personajes.h"
 
+typedef enum {
+    HABILIDAD_ENEMIGO_NINGUNA,
+    HABILIDAD_ENEMIGO_TRAMPA,   // el personaje golpeado queda debilitado 1 turno
+    HABILIDAD_ENEMIGO_CRITICO   // chance de que el golpe haga x1.5 de dano
+} TipoHabilidadEnemigo;
+
 typedef struct {
     char nombre[30];
+    TipoHabilidadEnemigo habilidad;
     int vida;
     int vidaMax;
     int defensa;
@@ -13,7 +20,7 @@ typedef struct {
 } Enemigo;
 
 // Crea un enemigo con sus stats iniciales (definidos segun la zona).
-Enemigo crearEnemigo(const char *nombre, int vidaMax, int defensa, int ataque);
+Enemigo crearEnemigo(const char *nombre, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque);
 
 // Muestra por consola los datos actuales del enemigo.
 void mostrarEnemigo(const Enemigo *enemigo);

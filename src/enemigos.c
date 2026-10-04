@@ -2,10 +2,11 @@
 #include <string.h>
 #include "../include/enemigos.h"
 
-Enemigo crearEnemigo(const char *nombre, int vidaMax, int defensa, int ataque) {
+Enemigo crearEnemigo(const char *nombre, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque) {
     Enemigo enemigo;
     strncpy(enemigo.nombre, nombre, sizeof(enemigo.nombre) - 1);
     enemigo.nombre[sizeof(enemigo.nombre) - 1] = '\0';
+    enemigo.habilidad = habilidad;
     enemigo.vida = vidaMax;
     enemigo.vidaMax = vidaMax;
     enemigo.defensa = defensa;
