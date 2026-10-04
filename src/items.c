@@ -20,11 +20,29 @@ void agregarItem(Inventario *inventario, Item item) {
 }
 
 void usarItem(Inventario *inventario, int indice, Personaje *objetivo) {
-    // TODO: aplicar el efecto real segun el TipoItem (vida, ataque, defensa).
-    (void) objetivo;
     if (indice < 0 || indice >= inventario->cantidad) {
         return;
     }
+
+    Item item = inventario->items[indice];
+    switch (item.tipo) {
+        case ITEM_VIDA:
+            objetivo->vida += item.valor;
+            if (objetivo->vida > objetivo->vidaMax) {
+                objetivo->vida = objetivo->vidaMax;
+            }
+            printf("%s recupera vida: %d/%d\n", objetivo->nombre, objetivo->vida, objetivo->vidaMax);
+            break;
+        case ITEM_ATAQUE:
+            objetivo->ataque += item.valor;
+            printf("El ataque de %s sube a %d\n", objetivo->nombre, objetivo->ataque);
+            break;
+        case ITEM_DEFENSA:
+            objetivo->defensa += item.valor;
+            printf("La defensa de %s sube a %d\n", objetivo->nombre, objetivo->defensa);
+            break;
+    }
+
     for (int i = indice; i < inventario->cantidad - 1; i++) {
         inventario->items[i] = inventario->items[i + 1];
     }
