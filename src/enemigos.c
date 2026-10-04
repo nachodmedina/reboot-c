@@ -31,7 +31,12 @@ void aplicarEstadoEnemigo(Enemigo *enemigo, Estado estado) {
 }
 
 void actualizarEstadoEnemigo(Enemigo *enemigo) {
-    // TODO: implementar efecto de cada TipoEstado, igual que en personajes.c.
+    if (enemigo->estadoActivo.tipo == ESTADO_VENENO && enemigo->estadoActivo.duracionTurnos > 0) {
+        enemigo->vida -= enemigo->estadoActivo.magnitud;
+        if (enemigo->vida < 0) {
+            enemigo->vida = 0;
+        }
+    }
     if (enemigo->estadoActivo.tipo != ESTADO_NINGUNO && enemigo->estadoActivo.duracionTurnos > 0) {
         enemigo->estadoActivo.duracionTurnos--;
         if (enemigo->estadoActivo.duracionTurnos == 0) {

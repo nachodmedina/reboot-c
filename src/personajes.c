@@ -36,7 +36,13 @@ void aplicarEstadoPersonaje(Personaje *personaje, Estado estado) {
 }
 
 void actualizarEstadoPersonaje(Personaje *personaje) {
-    // TODO: implementar efecto de cada TipoEstado (dano por veneno, saltear turno, etc.).
+    // Aturdido y debilitado los aplica combate.c durante el turno; aca solo el veneno.
+    if (personaje->estadoActivo.tipo == ESTADO_VENENO && personaje->estadoActivo.duracionTurnos > 0) {
+        personaje->vida -= personaje->estadoActivo.magnitud;
+        if (personaje->vida < 0) {
+            personaje->vida = 0;
+        }
+    }
     if (personaje->estadoActivo.tipo != ESTADO_NINGUNO && personaje->estadoActivo.duracionTurnos > 0) {
         personaje->estadoActivo.duracionTurnos--;
         if (personaje->estadoActivo.duracionTurnos == 0) {
