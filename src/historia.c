@@ -221,3 +221,73 @@ void mostrarPostBatalla (const Personaje *personaje) {
         personaje->nombre);
     printf ("sabiendo que adelante lo esperan muchas mas amenazas\n");
 }
+
+void eventoEntreFases(Personaje *personaje) {
+    printf("\n%s sigue avanzando entre las ruinas. Algo llama su atencion...\n",
+           personaje->nombre);
+
+    switch (numeroAleatorio(0, 10)) {
+        case 0:
+        case 1:
+            printf("No era nada. El camino sigue en silencio y continuas avanzando.\n");
+            break;
+        case 2:
+        case 3:
+            printf("Entre los restos encuentras una pocion de curacion.\n");
+            printf("La guardas mentalmente para mas adelante; por ahora no puedes llevarla.\n");
+            break;
+        case 4:
+        case 5:
+            printf("Descubres un frasco de veneno entre los escombros.\n");
+            printf("Podria servir contra una maquina, aunque todavia no puedes guardarlo.\n");
+            break;
+        case 6: {
+            Estado veneno = { ESTADO_VENENO, 2, 10 };
+            aplicarEstadoPersonaje(personaje, veneno);
+            printf("Una nube toxica se libera al mover los escombros y te alcanza.\n");
+            printf("Quedas envenenado: perderas 10 de vida durante 2 turnos.\n");
+            break;
+        }
+        case 7:
+            if (personaje->estadoActivo.tipo == ESTADO_VENENO) {
+                personaje->estadoActivo.tipo = ESTADO_NINGUNO;
+                personaje->estadoActivo.duracionTurnos = 0;
+                personaje->estadoActivo.magnitud = 0;
+                printf("Encuentras una planta medicinal y la aplicas sobre la herida.\n");
+                printf("El veneno deja de afectarte.\n");
+            } else {
+                printf("Encuentras una planta medicinal, pero no tienes veneno que curar.\n");
+            }
+            break;
+        case 8:
+        case 9:
+        case 10:
+            printf("Un pequeno robot de apoyo emerge de entre los escombros.\n");
+            printf("\"Sobreviviente detectado. Preparando asistencia.\"\n");
+
+            switch (numeroAleatorio(1, 3)) {
+                case 1:
+                    printf("El robot te ofrece dos pociones de curacion.\n");
+                    printf("Aun no puedes guardarlas, pero sabes donde encontrarlas.\n");
+                    break;
+                case 2:
+                    printf("El robot te ofrece dos frascos de veneno para tus armas.\n");
+                    printf("Aun no puedes guardarlos, pero sabes donde encontrarlos.\n");
+                    break;
+                case 3:
+                    personaje->vidaMax += 10;
+                    personaje->vida += 10;
+                    personaje->ataque += 10;
+                    personaje->defensa += 10;
+                    printf("El robot calibra tu equipo y refuerza tu cuerpo.\n");
+                    printf("Vida maxima +10, ataque +10 y defensa +10.\n");
+                    printf("Ahora tienes %d/%d de vida, %d de ataque y %d de defensa.\n",
+                           personaje->vida, personaje->vidaMax,
+                           personaje->ataque, personaje->defensa);
+                    break;
+            }
+            break;
+    }
+
+    pausar();
+}

@@ -200,6 +200,9 @@ static int iniciarZona(const Zona *zona, Personaje luchadores[], int cantLuchado
         }
 
         mostrarPostBatalla(&luchadores[0]);
+        if (i + 1 < zona->cantFases && !zona->fases[i + 1].fogataAntes) {
+            eventoEntreFases(&luchadores[0]);
+        }
     }
     return 1;
 }

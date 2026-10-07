@@ -72,4 +72,7 @@ void mostrarEncuentroEnemigos(const Personaje *personaje, const char *amenaza);
 
 void mostrarPostBatalla(const Personaje *personaje);
 
+// Evento narrativo aleatorio entre fases consecutivas.
+void eventoEntreFases(Personaje *personaje);
+
 #endif
