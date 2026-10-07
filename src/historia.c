@@ -10,6 +10,55 @@ Zona crearZona(const char *nombre, const char *descripcion, int nivel) {
     strncpy(zona.descripcion, descripcion, sizeof(zona.descripcion) - 1);
     zona.descripcion[sizeof(zona.descripcion) - 1] = '\0';
     zona.nivel = nivel;
+    zona.cantFases = 0;
+    return zona;
+}
+
+int agregarFase(Zona *zona, const char *amenaza, const Enemigo enemigos[], int cantEnemigos, int fogataAntes) {
+    if (zona->cantFases >= MAX_FASES_ZONA || cantEnemigos > MAX_ENEMIGOS_FASE) {
+        return 0;
+    }
+    Fase *fase = &zona->fases[zona->cantFases];
+    strncpy(fase->amenaza, amenaza, sizeof(fase->amenaza) - 1);
+    fase->amenaza[sizeof(fase->amenaza) - 1] = '\0';
+    for (int i = 0; i < cantEnemigos; i++) {
+        fase->enemigos[i] = enemigos[i];
+    }
+    fase->cantEnemigos = cantEnemigos;
+    fase->fogataAntes = fogataAntes;
+    zona->cantFases++;
+    return 1;
+}
+
+Zona crearZonaCampoCeniza(void) {
+    Zona zona = crearZona(
+        "Campo Ceniza",
+        "Lo que fue un pueblo agricola es hoy tierra quemada, vigilada por\n"
+        "cazadores al servicio de las maquinas y sus perros mecanicos.",
+        1
+    );
+
+    Enemigo centinela = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
+    Enemigo cazador = crearEnemigo("Cazador de Campo Ceniza", HABILIDAD_ENEMIGO_TRAMPA, 160, 16, 56);
+    Enemigo spectre = crearEnemigo("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
+
+    Enemigo fase1[] = { centinela, centinela };
+    agregarFase(&zona, "dos perros mecanicos emergen entre la ceniza y corren directo hacia vos.",
+                fase1, 2, 0);
+
+    Enemigo fase2[] = { cazador };
+    agregarFase(&zona, "un cazador sale de entre los restos de un granero y te apunta.",
+                fase2, 1, 0);
+
+    Enemigo fase3[] = { cazador, centinela, centinela };
+    agregarFase(&zona, "otro cazador aparece, esta vez acompañado por sus perros.",
+                fase3, 3, 0);
+
+    // Fase del jefe: antes se descansa en una fogata.
+    Enemigo fase4[] = { cazador, spectre };
+    agregarFase(&zona, "una figura enorme avanza detras de un cazador: es Spectre.",
+                fase4, 2, 1);
+
     return zona;
 }
 
