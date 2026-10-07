@@ -16,6 +16,8 @@
 static ModoJuego seleccionarModoJuego(void);
 static int seleccionarPersonajeInicial(const Personaje equipo[], int cantPersonajes);
 static void nuevaPartida(void);
+static int iniciarZona(const Zona *zona, Personaje luchadores[], int cantLuchadores, ModoJuego modo);
+static void descansarEnFogata(Personaje luchadores[], int cantLuchadores);
 static void cargarPartidaExistente(void);
 static void mostrarMenuPrincipal(void);
 static void crearEquipo(Personaje equipo[]);
@@ -92,48 +94,25 @@ static void probarCombate(void) {
         }
     }
 
-    Enemigo centinela = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
-    Enemigo cazador = crearEnemigo("Cazador de Campo Ceniza", HABILIDAD_ENEMIGO_TRAMPA, 160, 16, 56);
-    Enemigo spectre = crearEnemigo("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
-
-    printf("\nElegi la fase de Zona 1:\n");
-    printf("1. Fase 1: 2 Centinela Canino\n");
-    printf("2. Fase 2: 1 Cazador de Campo Ceniza\n");
-    printf("3. Fase 3: 1 Cazador + 2 Centinela\n");
-    printf("4. Fase 4 (jefe): Cazador + Spectre\n");
-    printf("Elija una opcion: ");
-
-    Enemigo enemigos[3];
-    int cantEnemigos = 0;
-    switch (leerOpcionMenu(1, 4)) {
-        case 1:
-            enemigos[0] = centinela;
-            enemigos[1] = centinela;
-            cantEnemigos = 2;
-            break;
-        case 2:
-            enemigos[0] = cazador;
-            cantEnemigos = 1;
-            break;
-        case 3:
-            enemigos[0] = cazador;
-            enemigos[1] = centinela;
-            enemigos[2] = centinela;
-            cantEnemigos = 3;
-            break;
-        case 4:
-            enemigos[0] = cazador;
-            enemigos[1] = spectre;
-            cantEnemigos = 2;
-            break;
+    // "zona" es una copia local: se puede pelear directo contra sus enemigos.
+    Zona zona = crearZonaCampoCeniza();
+    printf("\nElegi la fase de %s:\n", zona.nombre);
+    for (int i = 0; i < zona.cantFases; i++) {
+        printf("%d. Fase %d:", i + 1, i + 1);
+        for (int j = 0; j < zona.fases[i].cantEnemigos; j++) {
+            printf("%s %s", j == 0 ? "" : ",", zona.fases[i].enemigos[j].nombre);
+        }
+        printf("\n");
     }
+    printf("Elija una opcion: ");
+    Fase *fase = &zona.fases[leerOpcionMenu(1, zona.cantFases) - 1];
 
     Inventario *inventario = crearInventario(2);
     Item pocion = { ITEM_VIDA, 100, 0 };
     agregarItem(inventario, pocion);
     agregarItem(inventario, pocion);
 
-    iniciarCombate(luchadores, cantPersonajes, enemigos, cantEnemigos, inventario);
+    iniciarCombate(luchadores, cantPersonajes, fase->enemigos, fase->cantEnemigos, inventario);
     liberarInventario(inventario);
     pausar();
 }
@@ -174,7 +153,57 @@ static int seleccionarPersonajeInicial(const Personaje equipo[], int cantPersona
     return opcion - 1; // el jugador ve "1..n", el arreglo usa "0..n-1"
 }
 
-// TODO: reemplazar por el flujo real (eleccion de zona, combates, guardado automatico, etc.).
+// Antes de una pelea dificil: vida al maximo y sin estados alterados.
+static void descansarEnFogata(Personaje luchadores[], int cantLuchadores) {
+    printf("\nEncontras los restos de una fogata todavia tibia. Descansas un rato\n");
+    printf("y recuperas todas tus fuerzas.\n");
+    for (int i = 0; i < cantLuchadores; i++) {
+        luchadores[i].vida = luchadores[i].vidaMax;
+        luchadores[i].estadoActivo.tipo = ESTADO_NINGUNO;
+        luchadores[i].estadoActivo.duracionTurnos = 0;
+    }
+    pausar();
+}
+
+// Juega todas las fases de la zona en orden: encuentro, combate y escena
+// post batalla. "luchadores" se modifica directamente (vida, estados), asi
+// lo que pasa en una fase se arrastra a la siguiente.
+// Devuelve 1 si superan la zona, 0 si caen en alguna fase.
+static int iniciarZona(const Zona *zona, Personaje luchadores[], int cantLuchadores, ModoJuego modo) {
+    mostrarEntradaZona(zona);
+
+    for (int i = 0; i < zona->cantFases; i++) {
+        const Fase *fase = &zona->fases[i];
+
+        if (fase->fogataAntes) {
+            descansarEnFogata(luchadores, cantLuchadores);
+        }
+
+        mostrarEncuentroEnemigos(&luchadores[0], fase->amenaza);
+
+        // iniciarCombate les baja la vida a los enemigos, asi que peleamos
+        // contra una copia y la zona queda intacta.
+        Enemigo enemigos[MAX_ENEMIGOS_FASE];
+        for (int j = 0; j < fase->cantEnemigos; j++) {
+            enemigos[j] = fase->enemigos[j];
+        }
+
+        if (!iniciarCombate(luchadores, cantLuchadores, enemigos, fase->cantEnemigos, NULL)) {
+            printf("\n%s cae derrotado en %s...\n",
+                   cantLuchadores == 1 ? luchadores[0].nombre : "El equipo", zona->nombre);
+            if (modo == MODO_DIFICIL) {
+                eliminarPartida();
+                printf("Estabas en Modo Dificil: la partida fue eliminada.\n");
+            }
+            pausar();
+            return 0;
+        }
+
+        mostrarPostBatalla(&luchadores[0]);
+    }
+    return 1;
+}
+
 static void nuevaPartida(void) {
     ModoJuego modo = seleccionarModoJuego();
 
@@ -183,107 +212,34 @@ static void nuevaPartida(void) {
     } else {
         printf("\nModo Dificil activado: si tu equipo cae en combate, la partida se borra.\n");
     }
-    // NOTA: por ahora "modo" solo se usa para este mensaje. Cuando programemos
-    // el bucle de combate de verdad, vamos a tener que hacerle llegar este
-    // valor (por ejemplo, como parametro de iniciarCombate) para poder llamar
-    // a eliminarPartida() si el equipo pierde y estamos en MODO_DIFICIL.
     mostrarIntroduccionMundo();
 
-    
     Personaje equipo[CANT_PERSONAJES];
     crearEquipo(equipo);
 
     int protagonista = seleccionarPersonajeInicial(equipo, CANT_PERSONAJES);
     mostrarNarrativaInicial(&equipo[protagonista]);
     mostrarSalidaDeRaiz(&equipo[protagonista]);
-   
 
-    Zona campoCeniza = crearZona(
-        "Campo Ceniza",
-        "Lo que fue un pueblo agricola es hoy tierra quemada, vigilada por\n"
-        "cazadores al servicio de las maquinas y sus perros mecanicos.",
-        1
-    );
-    mostrarEntradaZona(&campoCeniza);
-
-    // --- Fase 1 de Campo Ceniza: 2 Centinela Canino ---
-    mostrarEncuentroEnemigos(
-        &equipo[protagonista],
-        "dos perros mecanicos emergen entre la ceniza y corren directo hacia vos."
-    );
-
-    // iniciarCombate modifica el arreglo que le pasamos (vida, estados),
-    // asi que armamos un arreglo aparte con una COPIA del protagonista.
-    // Zona 1 se pelea en solitario, por eso el arreglo tiene un solo lugar.
-    Personaje luchador[1];
-    luchador[0] = equipo[protagonista];
-
-    Enemigo enemigosFase1[2];
-    enemigosFase1[0] = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
-    enemigosFase1[1] = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
-
-    int gano = iniciarCombate(luchador, 1, enemigosFase1, 2, NULL);
-
-    // Volcamos los cambios del combate (vida, estados) de vuelta al equipo,
-    // porque "luchador" era una copia aparte.
-    equipo[protagonista] = luchador[0];
-
-    if (!gano) {
-        printf("\n%s cae derrotado en Campo Ceniza...\n", equipo[protagonista].nombre);
-        if (modo == MODO_DIFICIL) {
-            eliminarPartida();
-            printf("Estabas en Modo Dificil: la partida fue eliminada.\n");
-        }
-        pausar();
+    // Zona 1 se pelea en solitario: &equipo[protagonista] funciona como un
+    // arreglo de 1 personaje, y los cambios del combate quedan en "equipo".
+    Zona campoCeniza = crearZonaCampoCeniza();
+    if (!iniciarZona(&campoCeniza, &equipo[protagonista], 1, modo)) {
         return; // no se guarda partida ni se sigue mostrando nada mas
     }
 
-    mostrarPostBatalla(&equipo[protagonista]);  // Esto llama a la función.
+    // Siguiente zona (cuando exista), por ejemplo con el equipo completo:
+    // Zona zona2 = crearZonaXxx();
+    // if (!iniciarZona(&zona2, equipo, CANT_PERSONAJES, modo)) {
+    //     return;
+    // }
 
-
-
-    // La siguiente fase usa el mismo luchador, conservando sus cambios.
-
-    
-    luchador[0] = equipo[protagonista];
-
-
-    Enemigo enemigosFase2[2];
-    enemigosFase2[0] = crearEnemigo("Cazador de campo ceniza", HABILIDAD_ENEMIGO_TRAMPA, 160, 16, 56);
-    enemigosFase2[1] = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
-
-    gano = iniciarCombate(luchador, 1, enemigosFase2, 2, NULL);
-
-    equipo[protagonista] = luchador[0];
-
-    if (!gano) {
-        printf("\n%s cae derrotado en Campo Ceniza...\n", equipo[protagonista].nombre);
-        if (modo == MODO_DIFICIL) {
-            eliminarPartida();
-            printf("Estabas en Modo Dificil: la partida fue eliminada.\n");
-        }
-        pausar();
-        return; // no se guarda partida ni se sigue mostrando nada mas
-    }
-    
-    
-    
-    
-    printf("Tu personaje:\n");
+    printf("\nTu personaje:\n");
     mostrarPersonaje(&equipo[protagonista]);
 
-
-
-
-    
-    
     guardarPartida(equipo, CANT_PERSONAJES);
     printf("\nPartida nueva creada y guardada (modulo de juego en construccion).\n");
     pausar();
-
-
-
-
 }
 
 
