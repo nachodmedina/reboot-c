@@ -2,17 +2,37 @@
 #define HISTORIA_H
 
 #include "personajes.h"
+#include "enemigos.h"
 
+#define MAX_ENEMIGOS_FASE 3
+#define MAX_FASES_ZONA 4
+
+// Una fase es un combate dentro de una zona.
+typedef struct {
+    char amenaza[150];                    // texto para mostrarEncuentroEnemigos
+    Enemigo enemigos[MAX_ENEMIGOS_FASE];  // enemigos en su estado inicial (vida llena)
+    int cantEnemigos;                     // cuantos lugares de "enemigos" se usan
+    int fogataAntes;                      // 1 si los luchadores descansan antes de esta fase
+} Fase;
 
 // Una zona agrupa la narrativa y los enemigos asociados a una etapa del juego.
 typedef struct {
     char nombre[30];
     char descripcion[200];
     int nivel;
+    Fase fases[MAX_FASES_ZONA];  // en el orden en que se juegan
+    int cantFases;               // cuantos lugares de "fases" se usan
 } Zona;
 
-// Crea una zona con su nombre, descripcion y nivel de dificultad.
+// Crea una zona con su nombre, descripcion y nivel de dificultad (sin fases).
 Zona crearZona(const char *nombre, const char *descripcion, int nivel);
+
+// Agrega una fase al final de la zona. Los enemigos se copian.
+// Devuelve 1 si la agrego, 0 si no hay lugar.
+int agregarFase(Zona *zona, const char *amenaza, const Enemigo enemigos[], int cantEnemigos, int fogataAntes);
+
+// Zona 1: Campo Ceniza, con sus 4 fases (la ultima es el jefe).
+Zona crearZonaCampoCeniza(void);
 
 // Muestra la narrativa de la zona antes de avanzar.
 void mostrarNarrativaZona(const Zona *zona);
