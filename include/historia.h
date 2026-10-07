@@ -48,4 +48,8 @@ void mostrarEntradaZona(const Zona *zona);
 void mostrarEncuentroEnemigos(const Personaje *personaje, const char *amenaza);
 
 
+//escena luego de la batalla
+
+void mostrarPostBatalla(const Personaje *personaje);
+
 #endif

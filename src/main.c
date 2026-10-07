@@ -238,7 +238,35 @@ static void nuevaPartida(void) {
         return; // no se guarda partida ni se sigue mostrando nada mas
     }
 
+    mostrarPostBatalla(&equipo[protagonista]);  // Esto llama a la función.
 
+
+
+    // La siguiente fase usa el mismo luchador, conservando sus cambios.
+
+    
+    luchador[0] = equipo[protagonista];
+
+
+    Enemigo enemigosFase2[2];
+    enemigosFase2[0] = crearEnemigo("Cazador de campo ceniza", HABILIDAD_ENEMIGO_TRAMPA, 160, 16, 56);
+    enemigosFase2[1] = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
+
+    gano = iniciarCombate(luchador, 1, enemigosFase2, 2, NULL);
+
+    equipo[protagonista] = luchador[0];
+
+    if (!gano) {
+        printf("\n%s cae derrotado en Campo Ceniza...\n", equipo[protagonista].nombre);
+        if (modo == MODO_DIFICIL) {
+            eliminarPartida();
+            printf("Estabas en Modo Dificil: la partida fue eliminada.\n");
+        }
+        pausar();
+        return; // no se guarda partida ni se sigue mostrando nada mas
+    }
+    
+    
     
     
     printf("Tu personaje:\n");

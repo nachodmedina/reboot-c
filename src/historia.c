@@ -164,3 +164,11 @@ void mostrarEncuentroEnemigos(const Personaje *personaje, const char *amenaza) {
     printf("rompe el silencio. No hay tiempo para pensar: %s\n", amenaza);
     pausar();
 }
+
+
+void mostrarPostBatalla (const Personaje *personaje) {
+
+    printf ("Luego de la batalla, %s topma un descanso y sigue avanzando...\n",
+        personaje->nombre);
+    printf ("sabiendo que adelante lo esperan muchas mas amenazas\n");
+}
