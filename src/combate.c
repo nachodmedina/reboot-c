@@ -278,7 +278,7 @@ static void turnoPersonaje(Personaje equipo[], int cantPersonajes, int actual,
         printf("3. Habilidad especial%s\n", efecto->yaUsada ? " (ya usada)" : "");
         printf("4. Usar item\n");
         printf("Elija una opcion: ");
-
+        
         switch (leerOpcionMenu(1, 4)) {
             case 1: {
                 int objetivo = elegirEnemigo(enemigos, cantEnemigos);

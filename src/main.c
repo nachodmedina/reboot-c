@@ -206,6 +206,39 @@ static void nuevaPartida(void) {
     );
     mostrarEntradaZona(&campoCeniza);
 
+    // --- Fase 1 de Campo Ceniza: 2 Centinela Canino ---
+    mostrarEncuentroEnemigos(
+        &equipo[protagonista],
+        "dos perros mecanicos emergen entre la ceniza y corren directo hacia vos."
+    );
+
+    // iniciarCombate modifica el arreglo que le pasamos (vida, estados),
+    // asi que armamos un arreglo aparte con una COPIA del protagonista.
+    // Zona 1 se pelea en solitario, por eso el arreglo tiene un solo lugar.
+    Personaje luchador[1];
+    luchador[0] = equipo[protagonista];
+
+    Enemigo enemigosFase1[2];
+    enemigosFase1[0] = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
+    enemigosFase1[1] = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
+
+    int gano = iniciarCombate(luchador, 1, enemigosFase1, 2, NULL);
+
+    // Volcamos los cambios del combate (vida, estados) de vuelta al equipo,
+    // porque "luchador" era una copia aparte.
+    equipo[protagonista] = luchador[0];
+
+    if (!gano) {
+        printf("\n%s cae derrotado en Campo Ceniza...\n", equipo[protagonista].nombre);
+        if (modo == MODO_DIFICIL) {
+            eliminarPartida();
+            printf("Estabas en Modo Dificil: la partida fue eliminada.\n");
+        }
+        pausar();
+        return; // no se guarda partida ni se sigue mostrando nada mas
+    }
+
+
     
     
     printf("Tu personaje:\n");

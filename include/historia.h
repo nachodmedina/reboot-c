@@ -39,4 +39,13 @@ void mostrarSalidaDeRaiz(const Personaje *personaje);
 // usando los datos de la struct Zona.
 void mostrarEntradaZona(const Zona *zona);
 
+
+// Escena corta de transicion justo antes de un combate: el personaje
+// escucha algo raro y se topa con lo que lo va a atacar. "amenaza" describe
+// que aparece (por ejemplo "dos perros mecanicos corren hacia vos"), para
+// poder reusar esta misma funcion en cada encuentro de cada zona sin
+// reescribir el texto fijo cada vez.
+void mostrarEncuentroEnemigos(const Personaje *personaje, const char *amenaza);
+
+
 #endif

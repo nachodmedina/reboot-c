@@ -115,7 +115,7 @@ void mostrarNarrativaInicial(const Personaje *personaje) {
     printf("Una leyenda acaba de renacer.\n");
     pausar();
 
-    printf("Arma conseguido  %s  !! \n", personaje->arma);
+    printf("Arma conseguida  %s!! \n", personaje->arma);
 
     // Texto especifico de la habilidad que desbloquea cada personaje.
     printf("%s", textoHabilidadDesbloqueada(personaje->habilidadEspecial));
@@ -130,7 +130,7 @@ void mostrarSalidaDeRaiz(const Personaje *personaje) {
            personaje->nombre);
     printf("antes silenciosa, ahora vibra con un pulso constante, como si supiera\n");
     printf("exactamente hacia donde hay que ir.\n\n");
-    printf("un pequeño pedazo de la baliza se deprende y se posa en tu mano,");
+    printf("un pequeño pedazo de la baliza se desprende y se posa en tu mano,\n");
     printf("ahora esta pequeña baliza proyecta una luz tenua hacia la salida de las ruinas,\n");
     printf("marcando un camino que %s no habia visto antes.\n", personaje->nombre);
     pausar();
@@ -152,5 +152,15 @@ void mostrarEntradaZona(const Zona *zona) {
     printf("  ENTRASTE A LA ZONA: %s\n", zona->nombre);
     printf("=========================================\n\n");
     printf("%s\n", zona->descripcion);
+    pausar();
+}
+
+
+
+// Escena corta de transicion justo antes de un combate.
+void mostrarEncuentroEnemigos(const Personaje *personaje, const char *amenaza) {
+    printf("\nMientras %s avanza entre las ruinas del pueblo, un sonido metalico y extraño\n",
+           personaje->nombre);
+    printf("rompe el silencio. No hay tiempo para pensar: %s\n", amenaza);
     pausar();
 }
