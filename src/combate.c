@@ -21,9 +21,8 @@
 
 EfectoGrupal crearEfectoGrupal(void) {
     EfectoGrupal efecto;
-    efecto.tipo = HABILIDAD_NINGUNA;
+    efecto.tipo = EFECTO_GRUPAL_INACTIVO;
     efecto.turnosRestantes = 0;
-    efecto.yaUsada = 0;
     return efecto;
 }
 
@@ -45,7 +44,7 @@ int ataqueEfectivo(Personaje personaje) {
 
 // Aplica el critico grupal de Isaac si esta activo.
 static int aplicarCriticoGrupal(int dano, EfectoGrupal efecto) {
-    if (efecto.tipo == HABILIDAD_CRITICO_GRUPAL) {
+    if (efecto.tipo == EFECTO_GRUPAL_CRITICO) {
         return dano * CRITICO_GRUPAL_PORCENTAJE / 100;
     }
     return dano;
@@ -94,34 +93,34 @@ void curarEquipo(Personaje equipo[], int cantPersonajes, int cantidad) {
 }
 
 int activarHabilidad(Personaje usuario, Personaje equipo[], int cantPersonajes, EfectoGrupal *efecto) {
-    if (efecto->yaUsada || usuario.habilidadEspecial == HABILIDAD_NINGUNA) {
+    if (efecto->tipo != EFECTO_GRUPAL_INACTIVO) {
         return 0;
     }
-    efecto->tipo = usuario.habilidadEspecial;
-    efecto->turnosRestantes = DURACION_HABILIDAD;
-    efecto->yaUsada = 1;
 
     switch (usuario.habilidadEspecial) {
         case HABILIDAD_CRITICO_GRUPAL:
+            efecto->tipo = EFECTO_GRUPAL_CRITICO;
             printf("%s activa Critico grupal: el equipo pega x1.2 por %d turnos.\n",
                    usuario.nombre, DURACION_HABILIDAD);
             break;
         case HABILIDAD_DEFENSA_GRUPAL:
+            efecto->tipo = EFECTO_GRUPAL_DEFENSA;
             printf("%s activa Defensa grupal: el equipo recibe menos dano por %d turnos.\n",
                    usuario.nombre, DURACION_HABILIDAD);
             break;
         case HABILIDAD_CURACION_GRUPAL:
+            efecto->tipo = EFECTO_GRUPAL_CURACION;
             printf("%s activa Curacion grupal.\n", usuario.nombre);
             curarEquipo(equipo, cantPersonajes, CURACION_GRUPAL);
             break;
-        case HABILIDAD_NINGUNA:
-            break;
     }
+
+    efecto->turnosRestantes = DURACION_HABILIDAD;
     return 1;
 }
 
 void iniciarRonda(Personaje equipo[], int cantPersonajes, EfectoGrupal efecto) {
-    if (efecto.tipo == HABILIDAD_CURACION_GRUPAL && efecto.turnosRestantes > 0) {
+    if (efecto.tipo == EFECTO_GRUPAL_CURACION && efecto.turnosRestantes > 0) {
         printf("La curacion grupal sigue actuando.\n");
         curarEquipo(equipo, cantPersonajes, CURACION_GRUPAL);
     }
@@ -152,7 +151,7 @@ void turnoEnemigo(Enemigo atacante, Personaje equipo[], int cantPersonajes, Efec
     }
 
     int defensa = equipo[indice].defensa;
-    if (efecto.tipo == HABILIDAD_DEFENSA_GRUPAL) {
+    if (efecto.tipo == EFECTO_GRUPAL_DEFENSA) {
         defensa = defensa * DEFENSA_GRUPAL_PORCENTAJE / 100;
     }
     int dano = calcularDano(atacante.ataque, defensa);
@@ -183,7 +182,7 @@ void cerrarRonda(EfectoGrupal *efecto) {
     if (efecto->turnosRestantes > 0) {
         efecto->turnosRestantes--;
         if (efecto->turnosRestantes == 0) {
-            efecto->tipo = HABILIDAD_NINGUNA;
+            efecto->tipo = EFECTO_GRUPAL_INACTIVO;
             printf("El efecto de la habilidad especial termino.\n");
         }
     }
@@ -275,7 +274,8 @@ static void turnoPersonaje(Personaje equipo[], int cantPersonajes, int actual,
         printf("\nTurno de %s:\n", equipo[actual].nombre);
         printf("1. Atacar a un enemigo\n");
         printf("2. Ataque en area\n");
-        printf("3. Habilidad especial%s\n", efecto->yaUsada ? " (ya usada)" : "");
+        printf("3. Habilidad especial%s\n",
+               efecto->tipo != EFECTO_GRUPAL_INACTIVO ? " (activa)" : "");
         printf("4. Usar item\n");
         printf("Elija una opcion: ");
         
@@ -292,7 +292,7 @@ static void turnoPersonaje(Personaje equipo[], int cantPersonajes, int actual,
                 if (activarHabilidad(equipo[actual], equipo, cantPersonajes, efecto)) {
                     return;
                 }
-                printf("La habilidad especial ya se uso en este combate.\n");
+                printf("La habilidad especial ya esta activa.\n");
                 break;
             case 4:
                 if (inventario != NULL && inventario->cantidad > 0) {

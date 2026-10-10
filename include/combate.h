@@ -5,15 +5,20 @@
 #include "enemigos.h"
 #include "items.h"
 
-// Habilidad especial grupal activa durante un combate. Es un dato del
-// combate, no del personaje: por eso no vive en la struct Personaje.
+typedef enum {
+    EFECTO_GRUPAL_INACTIVO,
+    EFECTO_GRUPAL_CRITICO,
+    EFECTO_GRUPAL_DEFENSA,
+    EFECTO_GRUPAL_CURACION
+} TipoEfectoGrupal;
+
+// Estado de la habilidad especial grupal durante un combate.
 typedef struct {
-    TipoHabilidadEspecial tipo;   // HABILIDAD_NINGUNA si no hay nada activo
+    TipoEfectoGrupal tipo;
     int turnosRestantes;
-    int yaUsada;                  // una sola habilidad grupal por combate
 } EfectoGrupal;
 
-// Crea un EfectoGrupal vacio para empezar un combate.
+// Crea un efecto grupal inactivo para empezar un combate.
 EfectoGrupal crearEfectoGrupal(void);
 
 // ataque - defensa, con minimo 0 (una defensa alta bloquea el golpe).
@@ -34,8 +39,8 @@ void ataqueArea(Personaje atacante, Enemigo enemigos[], int cantEnemigos, Efecto
 // Cura a todos los personajes vivos, sin pasar su vida maxima.
 void curarEquipo(Personaje equipo[], int cantPersonajes, int cantidad);
 
-// Activa la habilidad especial del usuario por 2 turnos (una vez por combate).
-// Devuelve 1 si se activo, 0 si ya se habia usado o el personaje no tiene habilidad.
+// Activa la habilidad especial del usuario por 2 turnos si no hay otro efecto activo.
+// Devuelve 1 si se activo o 0 si ya hay un efecto activo.
 int activarHabilidad(Personaje usuario, Personaje equipo[], int cantPersonajes, EfectoGrupal *efecto);
 
 // Efectos de comienzo de ronda (segunda curacion de Frieren).

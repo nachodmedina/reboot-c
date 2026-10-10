@@ -207,6 +207,8 @@ static int iniciarZona(const Zona *zona, Personaje luchadores[], int cantLuchado
     return 1;
 }
 
+
+
 static void nuevaPartida(void) {
     ModoJuego modo = seleccionarModoJuego();
 

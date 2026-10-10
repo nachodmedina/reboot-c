@@ -3,13 +3,12 @@
 #include "../include/historia.h"
 #include "../include/utils.h"
 
-Zona crearZona(const char *nombre, const char *descripcion, int nivel) {
+Zona crearZona(const char *nombre, const char *descripcion) {
     Zona zona;
     strncpy(zona.nombre, nombre, sizeof(zona.nombre) - 1);
     zona.nombre[sizeof(zona.nombre) - 1] = '\0';
     strncpy(zona.descripcion, descripcion, sizeof(zona.descripcion) - 1);
     zona.descripcion[sizeof(zona.descripcion) - 1] = '\0';
-    zona.nivel = nivel;
     zona.cantFases = 0;
     return zona;
 }
@@ -34,8 +33,7 @@ Zona crearZonaCampoCeniza(void) {
     Zona zona = crearZona(
         "Campo Ceniza",
         "Lo que fue un pueblo agricola es hoy tierra quemada, vigilada por\n"
-        "cazadores al servicio de las maquinas y sus perros mecanicos.",
-        1
+        "cazadores al servicio de las maquinas y sus perros mecanicos."
     );
 
     Enemigo centinela = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
@@ -60,11 +58,6 @@ Zona crearZonaCampoCeniza(void) {
                 fase4, 2, 1);
 
     return zona;
-}
-
-void mostrarNarrativaZona(const Zona *zona) {
-    // TODO: sumar mas texto narrativo y transiciones entre zonas.
-    printf("== %s (nivel %d) ==\n%s\n", zona->nombre, zona->nivel, zona->descripcion);
 }
 
 // Bloques 1 y 2: contexto del mundo y el ataque a Raiz.
@@ -116,7 +109,7 @@ static const char *textoHabilidadDesbloqueada(TipoHabilidadEspecial habilidad) {
                    "empieza a vibrar con una calidez que no sabe nombrar todavia, pero que\n"
                    "reconoce. Es magia antigua, pura vida fluyendo por sus manos para\n"
                    "sanar sus propias heridas y sostener a los que aun lo necesiten.\n";
-        case HABILIDAD_NINGUNA:
+
         default:
             // Caso general: por si en el futuro se agrega un personaje sin
             // una habilidad especifica todavia asignada.
@@ -290,4 +283,5 @@ void eventoEntreFases(Personaje *personaje) {
     }
 
     pausar();
+
 }

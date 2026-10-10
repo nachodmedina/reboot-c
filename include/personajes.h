@@ -16,7 +16,6 @@ typedef struct {
 } Estado;
 
 typedef enum {
-    HABILIDAD_NINGUNA,          // todavia no desbloqueo su habilidad
     HABILIDAD_CRITICO_GRUPAL,   // Isaac
     HABILIDAD_DEFENSA_GRUPAL,   // Dante
     HABILIDAD_CURACION_GRUPAL   // Frieren

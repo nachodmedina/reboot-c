@@ -51,7 +51,7 @@ static void testAtaqueIndividualYCritico(void) {
     ataqueIndividual(isaac, &normal, efecto);
     assert(normal.vida == 120 - 72);
 
-    efecto.tipo = HABILIDAD_CRITICO_GRUPAL;
+    efecto.tipo = EFECTO_GRUPAL_CRITICO;
     Enemigo conCritico = crearCentinela();
     ataqueIndividual(isaac, &conCritico, efecto);
     assert(conCritico.vida == 120 - 86);     // 72 * 1.2
@@ -140,27 +140,29 @@ static void testCuracionGrupalDosVeces(void) {
     assert(equipo[0].vida == 180);           // 2a curacion, ronda siguiente
 
     cerrarRonda(&efecto);
-    assert(efecto.tipo == HABILIDAD_NINGUNA);
+    assert(efecto.tipo == EFECTO_GRUPAL_INACTIVO);
     iniciarRonda(equipo, 3, efecto);
     assert(equipo[0].vida == 180);           // no hay 3a curacion
 }
 
-static void testHabilidadUnaVezPorCombate(void) {
+static void testHabilidadSePuedeReactivarTrasExpirar(void) {
     Personaje equipo[1] = { crearIsaac() };
     EfectoGrupal efecto = crearEfectoGrupal();
+    assert(efecto.tipo == EFECTO_GRUPAL_INACTIVO);
     assert(activarHabilidad(equipo[0], equipo, 1, &efecto) == 1);
-    assert(efecto.tipo == HABILIDAD_CRITICO_GRUPAL);
+    assert(efecto.tipo == EFECTO_GRUPAL_CRITICO);
+    assert(efecto.turnosRestantes == 2);
     assert(activarHabilidad(equipo[0], equipo, 1, &efecto) == 0);
 
     cerrarRonda(&efecto);
-    assert(efecto.tipo == HABILIDAD_CRITICO_GRUPAL);  // sigue en la 2a ronda
-    cerrarRonda(&efecto);
-    assert(efecto.tipo == HABILIDAD_NINGUNA);
+    assert(efecto.tipo == EFECTO_GRUPAL_CRITICO);  // sigue en la 2a ronda
     assert(activarHabilidad(equipo[0], equipo, 1, &efecto) == 0);
-
-    Personaje sinHabilidad[1] = { crearPersonaje("Nadie", "Palo", HABILIDAD_NINGUNA, 100, 10, 10) };
-    EfectoGrupal otro = crearEfectoGrupal();
-    assert(activarHabilidad(sinHabilidad[0], sinHabilidad, 1, &otro) == 0);
+    cerrarRonda(&efecto);
+    assert(efecto.tipo == EFECTO_GRUPAL_INACTIVO);
+    assert(efecto.turnosRestantes == 0);
+    assert(activarHabilidad(equipo[0], equipo, 1, &efecto) == 1);
+    assert(efecto.tipo == EFECTO_GRUPAL_CRITICO);
+    assert(efecto.turnosRestantes == 2);
 }
 
 static void testUsarItem(void) {
@@ -276,7 +278,7 @@ int main(int argc, char *argv[]) {
     testEnemigoNoAtacaAMuertos();
     testDefensaGrupal();
     testCuracionGrupalDosVeces();
-    testHabilidadUnaVezPorCombate();
+    testHabilidadSePuedeReactivarTrasExpirar();
     testUsarItem();
     printf("\n===== Todos los tests pasaron =====\n");
 

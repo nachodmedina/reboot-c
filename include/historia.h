@@ -19,13 +19,12 @@ typedef struct {
 typedef struct {
     char nombre[30];
     char descripcion[200];
-    int nivel;
     Fase fases[MAX_FASES_ZONA];  // en el orden en que se juegan
     int cantFases;               // cuantos lugares de "fases" se usan
 } Zona;
 
-// Crea una zona con su nombre, descripcion y nivel de dificultad (sin fases).
-Zona crearZona(const char *nombre, const char *descripcion, int nivel);
+// Crea una zona con su nombre y descripcion (sin fases).
+Zona crearZona(const char *nombre, const char *descripcion);
 
 // Agrega una fase al final de la zona. Los enemigos se copian.
 // Devuelve 1 si la agrego, 0 si no hay lugar.
@@ -33,9 +32,6 @@ int agregarFase(Zona *zona, const char *amenaza, const Enemigo enemigos[], int c
 
 // Zona 1: Campo Ceniza, con sus 4 fases (la ultima es el jefe).
 Zona crearZonaCampoCeniza(void);
-
-// Muestra la narrativa de la zona antes de avanzar.
-void mostrarNarrativaZona(const Zona *zona);
 
 // Muestra la introduccion general del mundo (Bloques 1 y 2 del guion):
 // el contexto del año 2526 y el ataque a Raiz. No depende de que personaje
