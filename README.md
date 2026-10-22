@@ -114,6 +114,14 @@ pociones o veneno, pero todavía no se pueden guardar.
   todavía no se usan.
 - Sacar la opción temporal **"Probar combate"** del menú.
 
+## Convenciones de nombres C
+
+- Los alias de tipos declarados con `typedef struct` terminan en `_t`
+  (`Personaje_t`, `Inventario_t`).
+- Los nombres de variables y parametros puntero terminan en `_ptr`
+  (`personaje_ptr`, `archivo_ptr`). En parametros, los arreglos tambien se
+  escriben con este sufijo porque C los recibe como punteros.
+
 ## Estructura
 
 - `src/` y `include/` — un `.c`/`.h` por módulo:
@@ -123,7 +131,7 @@ pociones o veneno, pero todavía no se pueden guardar.
     grupales, turnos de enemigos y bucle interactivo.
   - `items` — ítems e inventario dinámico (`malloc` / `realloc`).
   - `archivos` — guardado, carga, borrado de partida (modo difícil) y log en archivo.
-  - `historia` — narrativa, zonas y fases (`Zona`, `Fase`), Campo Ceniza y eventos
+  - `historia` — narrativa, zonas y fases (`Zona_t`, `Fase_t`), Campo Ceniza y eventos
     aleatorios entre fases.
   - `utils` — random, pausas, lectura validada de menús y helpers de colores ANSI.
   - `main.c` — menú principal, flujo de nueva partida, recorrido de zonas y fogata.

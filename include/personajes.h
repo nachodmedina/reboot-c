@@ -13,7 +13,7 @@ typedef struct {
     TipoEstado tipo;
     int duracionTurnos;
     int magnitud;
-} Estado;
+} Estado_t;
 
 typedef enum {
     HABILIDAD_CRITICO_GRUPAL,   // Isaac
@@ -29,21 +29,21 @@ typedef struct {
     int vidaMax;
     int defensa;
     int ataque;
-    Estado estadoActivo;
-} Personaje;
+    Estado_t estadoActivo;
+} Personaje_t;
 
 // Crea un personaje jugable con sus stats iniciales.
-Personaje crearPersonaje(const char *nombre, const char *arma, TipoHabilidadEspecial habilidad, int vidaMax, int defensa, int ataque);
+Personaje_t crearPersonaje(const char *nombre_ptr, const char *arma_ptr, TipoHabilidadEspecial habilidad, int vidaMax, int defensa, int ataque);
 // Muestra por consola los datos actuales del personaje.
-void mostrarPersonaje(const Personaje *personaje);
+void mostrarPersonaje(const Personaje_t *personaje_ptr);
 
 // Devuelve 1 si el personaje sigue con vida, 0 si fue derrotado.
-int estaVivoPersonaje(const Personaje *personaje);
+int estaVivoPersonaje(const Personaje_t *personaje_ptr);
 
 // Aplica un nuevo estado alterado al personaje (veneno, aturdido, etc.).
-void aplicarEstadoPersonaje(Personaje *personaje, Estado estado);
+void aplicarEstadoPersonaje(Personaje_t *personaje_ptr, Estado_t estado);
 
 // Procesa el estado activo al final de un turno (resta duracion, aplica efecto).
-void actualizarEstadoPersonaje(Personaje *personaje);
+void actualizarEstadoPersonaje(Personaje_t *personaje_ptr);
 
 #endif

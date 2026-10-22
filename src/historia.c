@@ -3,57 +3,64 @@
 #include "../include/historia.h"
 #include "../include/utils.h"
 
-Zona crearZona(const char *nombre, const char *descripcion) {
-    Zona zona;
-    strncpy(zona.nombre, nombre, sizeof(zona.nombre) - 1);
+static void agregarRecompensa(Inventario_t *inventario_ptr, TipoItem tipo, int valor) {
+    Item_t item = { tipo, valor };
+    if (!agregarItem(inventario_ptr, item)) {
+        printf("La bolsa esta llena; no puedes guardar ese consumible.\n");
+    }
+}
+
+Zona_t crearZona(const char *nombre_ptr, const char *descripcion_ptr) {
+    Zona_t zona;
+    strncpy(zona.nombre, nombre_ptr, sizeof(zona.nombre) - 1);
     zona.nombre[sizeof(zona.nombre) - 1] = '\0';
-    strncpy(zona.descripcion, descripcion, sizeof(zona.descripcion) - 1);
+    strncpy(zona.descripcion, descripcion_ptr, sizeof(zona.descripcion) - 1);
     zona.descripcion[sizeof(zona.descripcion) - 1] = '\0';
     zona.cantFases = 0;
     return zona;
 }
 
-int agregarFase(Zona *zona, const char *amenaza, const Enemigo enemigos[], int cantEnemigos, int fogataAntes) {
-    if (zona->cantFases >= MAX_FASES_ZONA || cantEnemigos > MAX_ENEMIGOS_FASE) {
+int agregarFase(Zona_t *zona_ptr, const char *amenaza_ptr, const Enemigo_t enemigos_ptr[], int cantEnemigos, int fogataAntes) {
+    if (zona_ptr->cantFases >= MAX_FASES_ZONA || cantEnemigos > MAX_ENEMIGOS_FASE) {
         return 0;
     }
-    Fase *fase = &zona->fases[zona->cantFases];
-    strncpy(fase->amenaza, amenaza, sizeof(fase->amenaza) - 1);
-    fase->amenaza[sizeof(fase->amenaza) - 1] = '\0';
+    Fase_t *fase_ptr = &zona_ptr->fases[zona_ptr->cantFases];
+    strncpy(fase_ptr->amenaza, amenaza_ptr, sizeof(fase_ptr->amenaza) - 1);
+    fase_ptr->amenaza[sizeof(fase_ptr->amenaza) - 1] = '\0';
     for (int i = 0; i < cantEnemigos; i++) {
-        fase->enemigos[i] = enemigos[i];
+        fase_ptr->enemigos[i] = enemigos_ptr[i];
     }
-    fase->cantEnemigos = cantEnemigos;
-    fase->fogataAntes = fogataAntes;
-    zona->cantFases++;
+    fase_ptr->cantEnemigos = cantEnemigos;
+    fase_ptr->fogataAntes = fogataAntes;
+    zona_ptr->cantFases++;
     return 1;
 }
 
-Zona crearZonaCampoCeniza(void) {
-    Zona zona = crearZona(
+Zona_t crearZonaCampoCeniza(void) {
+    Zona_t zona = crearZona(
         "Campo Ceniza",
         "Lo que fue un pueblo agricola es hoy tierra quemada, vigilada por\n"
         "cazadores al servicio de las maquinas y sus perros mecanicos."
     );
 
-    Enemigo centinela = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
-    Enemigo cazador = crearEnemigo("Cazador de Campo Ceniza", HABILIDAD_ENEMIGO_TRAMPA, 160, 16, 56);
-    Enemigo spectre = crearEnemigo("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
+    Enemigo_t centinela = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
+    Enemigo_t cazador = crearEnemigo("Cazador de Campo Ceniza", HABILIDAD_ENEMIGO_TRAMPA, 160, 16, 56);
+    Enemigo_t spectre = crearEnemigo("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
 
-    Enemigo fase1[] = { centinela, centinela };
+    Enemigo_t fase1[] = { centinela, centinela };
     agregarFase(&zona, "dos perros mecanicos emergen entre la ceniza y corren directo hacia vos.",
                 fase1, 2, 0);
 
-    Enemigo fase2[] = { cazador };
+    Enemigo_t fase2[] = { cazador };
     agregarFase(&zona, "un cazador sale de entre los restos de un granero y te apunta.",
                 fase2, 1, 0);
 
-    Enemigo fase3[] = { cazador, centinela, centinela };
+    Enemigo_t fase3[] = { cazador, centinela, centinela };
     agregarFase(&zona, "otro cazador aparece, esta vez acompañado por sus perros.",
                 fase3, 3, 0);
 
     // Fase del jefe: antes se descansa en una fogata.
-    Enemigo fase4[] = { cazador, spectre };
+    Enemigo_t fase4[] = { cazador, spectre };
     agregarFase(&zona, "una figura enorme avanza detras de un cazador: es Spectre.",
                 fase4, 2, 1);
 
@@ -90,7 +97,7 @@ void mostrarIntroduccionMundo(void) {
 
 // Devuelve el texto de la habilidad especial que desbloquea cada personaje
 // al transformar su arma. Recibe directamente el TipoHabilidadEspecial (el
-// dato ya vive en la struct Personaje, seteado desde crearPersonaje), asi
+// dato ya vive en la struct Personaje_t, seteado desde crearPersonaje), asi
 // que no hace falta comparar nombres de personaje para saber cual es.
 static const char *textoHabilidadDesbloqueada(TipoHabilidadEspecial habilidad) {
     switch (habilidad) {
@@ -119,34 +126,34 @@ static const char *textoHabilidadDesbloqueada(TipoHabilidadEspecial habilidad) {
 
 // Bloques 3, 4 y 5: la separacion, el hallazgo del arma comun junto a la
 // baliza, y la transformacion del arma segun el personaje elegido.
-void mostrarNarrativaInicial(const Personaje *personaje) {
+void mostrarNarrativaInicial(const Personaje_t *personaje_ptr) {
     // --- Bloque 3: la separacion ---
     printf("\nEn el caos de la batalla, %s queda separado del resto.\n",
-           personaje->nombre);
+           personaje_ptr->nombre);
     printf("No hay tiempo para ayudar a nadie: solo para correr, y esperar a encontrar otros sobrevivientes\n");
     printf("el sonido de los engranajes y el fuego enemigo lo obligan a buscar refugio entre las ruinas.\n");
     pausar();
 
     // --- Bloque 4: el hallazgo del arma comun + la baliza ---
     printf("\n\nAl adentrarse en la oscuridad, la respiracion de %s se detiene.\n",
-            personaje->nombre);
+            personaje_ptr->nombre);
     printf("Frente a el se alza una enorme compuerta de metal oscuro, cubierta de\n");
     printf("inscripciones de una era olvidada. La puerta cede con un gemido pesado...\n\n");
     printf("En el centro de la sala, un pilar monolitico pulsa con una luz violeta.\n");
     printf("%s Al acercarse y apoyar su mano, el pilar estalla en un relampago silencioso.\n",
-            personaje->nombre);
-    printf("Visiones invaden la mente de %s:\n\n", personaje->nombre);
+            personaje_ptr->nombre);
+    printf("Visiones invaden la mente de %s:\n\n", personaje_ptr->nombre);
 
     printf("  > Ciudades enteras consumidas por el fuego...\n");
     printf("  > Ejercitos antiguos cayendo ante legiones de maquinas...\n");
-    printf("  > Y en el centro de la masacre, un guerrero empunando tu %s,\n", personaje->arma);
+    printf("  > Y en el centro de la masacre, un guerrero empunando tu %s,\n", personaje_ptr->arma);
     printf("    pero brillando con un poder absoluto y devastador.\n\n");
     
     printf("Las visiones colapsan de golpe dejandote sin aliento.\n");
     pausar();
     printf("\nEl pilar libera un latido de energia pura que impacta de lleno en tu arma.\n");
     printf("%s observa como su %s comienza a transformarse y a parecerse a el arma que le mostro la baliza\n",
-            personaje->nombre, personaje->arma);
+            personaje_ptr->nombre, personaje_ptr->arma);
     printf("El acero oxidado de la vieja arma tembló\n");
     printf("El óxido y la sangre seca se desprendieron en el aire como cenizas arrastradas por un viento invisible, \n");
     printf("revelando una superficie que ya no era hierro, sino un cristal oscuro y perfecto que devoraba la luz del entorno.\n");
@@ -157,69 +164,92 @@ void mostrarNarrativaInicial(const Personaje *personaje) {
     printf("Una leyenda acaba de renacer.\n");
     pausar();
 
-    printf("Arma conseguida  %s!! \n", personaje->arma);
+    printf("Arma conseguida  %s!! \n", personaje_ptr->arma);
 
     // Texto especifico de la habilidad que desbloquea cada personaje.
-    printf("%s", textoHabilidadDesbloqueada(personaje->habilidadEspecial));
+    printf("%s", textoHabilidadDesbloqueada(personaje_ptr->habilidadEspecial));
     pausar();
 }
 
 // La baliza empieza a guiar el camino: se acaba la posibilidad de volver a
 // Raiz, y arranca el viaje hacia la primera zona. Depende del nombre del
 // personaje, por eso recibe el puntero.
-void mostrarSalidaDeRaiz(const Personaje *personaje) {
+void mostrarSalidaDeRaiz(const Personaje_t *personaje_ptr) {
     printf("\nCon el arma transformada en su mano, %s siente algo mas: la baliza,\n",
-           personaje->nombre);
+           personaje_ptr->nombre);
     printf("antes silenciosa, ahora vibra con un pulso constante, como si supiera\n");
     printf("exactamente hacia donde hay que ir.\n\n");
     printf("un pequeño pedazo de la baliza se desprende y se posa en tu mano,\n");
     printf("ahora esta pequeña baliza proyecta una luz tenua hacia la salida de las ruinas,\n");
-    printf("marcando un camino que %s no habia visto antes.\n", personaje->nombre);
+    printf("marcando un camino que %s no habia visto antes.\n", personaje_ptr->nombre);
     pausar();
 
     printf("\nRegresar a Raiz ya no es una opcion. Lo que quedaba del refugio esta\n");
     printf("en manos de las maquinas, y no hay señal de que nadie mas haya sobrevivido...\n");
     printf("todavia.\n\n");
     printf("%s respira hondo, aferra el arma, y sigue la luz de la baliza hacia\n",
-           personaje->nombre);
+           personaje_ptr->nombre);
     printf("la superficie. El viaje recien empieza.\n");
     pausar();
 }
 
 // Muestra el "cartel" de entrada a una zona nueva, usando directamente los
-// datos de la struct Zona (nombre y descripcion) en vez de textos sueltos
+// datos de la struct Zona_t (nombre y descripcion) en vez de textos sueltos
 // escritos a mano en cada lugar donde se entra a una zona.
-void mostrarEntradaZona(const Zona *zona) {
+void mostrarEntradaZona(const Zona_t *zona_ptr) {
     printf("\n=======================================\n");
-    printf("  ENTRASTE A LA ZONA: %s\n", zona->nombre);
+    printf("  ENTRASTE A LA ZONA: %s\n", zona_ptr->nombre);
     printf("=========================================\n\n");
-    printf("%s\n", zona->descripcion);
+    printf("%s\n", zona_ptr->descripcion);
     pausar();
 }
 
 
 
 // Escena corta de transicion justo antes de un combate.
-void mostrarEncuentroEnemigos(const Personaje *personaje, const char *amenaza) {
+void mostrarEncuentroEnemigos(const Personaje_t *personaje_ptr, const char *amenaza_ptr) {
     printf("\nMientras %s avanza entre las ruinas del pueblo, un sonido metalico y extraño\n",
-           personaje->nombre);
-    printf("rompe el silencio. No hay tiempo para pensar: %s\n", amenaza);
+           personaje_ptr->nombre);
+    printf("rompe el silencio. No hay tiempo para pensar: %s\n", amenaza_ptr);
     pausar();
 }
 
 
-void mostrarPostBatalla (const Personaje *personaje) {
+void mostrarPostBatalla (const Personaje_t *personaje_ptr) {
 
-    printf ("Luego de la batalla, %s topma un descanso y sigue avanzando...\n",
-        personaje->nombre);
+    printf ("Luego de la batalla, %s toma un descanso y sigue avanzando...\n",
+        personaje_ptr->nombre);
     printf ("sabiendo que adelante lo esperan muchas mas amenazas\n");
 }
 
-void eventoEntreFases(Personaje *personaje) {
-    printf("\n%s sigue avanzando entre las ruinas. Algo llama su atencion...\n",
-           personaje->nombre);
+void mostrarReaccionSephirot(const char *atributoEnemigo_ptr, int aumentoAcumulado) {
+    printf("\nLa baliza emite un pulso que se extiende por todo el campo de batalla.\n");
+    printf("Muy lejos de alli, Sephirot observa una lectura de energia desconocida.\n");
+    printf("\"Reconozco esa mejora. Si ellos se fortalecen, mis maquinas tambien.\"\n");
+    printf("Los enemigos de las proximas zonas ganaran %d puntos de %s acumulados.\n",
+           aumentoAcumulado, atributoEnemigo_ptr);
+    pausar();
+}
 
-    switch (numeroAleatorio(0, 10)) {
+void mostrarLiberacionAliado(const Personaje_t *protagonista_ptr, const Personaje_t *aliado_ptr) {
+    printf("\nLa baliza de %s comienza a parpadear y proyecta un camino entre las ruinas.\n",
+           protagonista_ptr->nombre);
+    printf("Al final del camino, una jaula de energia mantiene prisionero a %s.\n",
+           aliado_ptr->nombre);
+    printf("%s se acerca y rompe el sello de la jaula.\n", protagonista_ptr->nombre);
+    printf("La baliza toca el %s de %s, y su arma empieza a transformarse.\n",
+           aliado_ptr->arma, aliado_ptr->nombre);
+    printf("%s recupera el aliento: \"Gracias. En la proxima batalla luchare a tu lado.\"\n",
+           aliado_ptr->nombre);
+    printf("%s se unio a tu aventura.\n", aliado_ptr->nombre);
+    pausar();
+}
+
+void eventoEntreFases(Personaje_t *personaje_ptr, Inventario_t *inventario_ptr) {
+    printf("\n%s sigue avanzando entre las ruinas. Algo llama su atencion...\n",
+           personaje_ptr->nombre);
+
+    switch (numeroAleatorio(0, 8)) {
         case 0:
         case 1:
             printf("No era nada. El camino sigue en silencio y continuas avanzando.\n");
@@ -227,25 +257,25 @@ void eventoEntreFases(Personaje *personaje) {
         case 2:
         case 3:
             printf("Entre los restos encuentras una pocion de curacion.\n");
-            printf("La guardas mentalmente para mas adelante; por ahora no puedes llevarla.\n");
+            agregarRecompensa(inventario_ptr, ITEM_VIDA, 100);
             break;
         case 4:
         case 5:
             printf("Descubres un frasco de veneno entre los escombros.\n");
-            printf("Podria servir contra una maquina, aunque todavia no puedes guardarlo.\n");
+            agregarRecompensa(inventario_ptr, ITEM_VENENO, 5);
             break;
         case 6: {
-            Estado veneno = { ESTADO_VENENO, 2, 10 };
-            aplicarEstadoPersonaje(personaje, veneno);
+            Estado_t veneno = { ESTADO_VENENO, 2, 10 };
+            aplicarEstadoPersonaje(personaje_ptr, veneno);
             printf("Una nube toxica se libera al mover los escombros y te alcanza.\n");
             printf("Quedas envenenado: perderas 10 de vida durante 2 turnos.\n");
             break;
         }
         case 7:
-            if (personaje->estadoActivo.tipo == ESTADO_VENENO) {
-                personaje->estadoActivo.tipo = ESTADO_NINGUNO;
-                personaje->estadoActivo.duracionTurnos = 0;
-                personaje->estadoActivo.magnitud = 0;
+            if (personaje_ptr->estadoActivo.tipo == ESTADO_VENENO) {
+                personaje_ptr->estadoActivo.tipo = ESTADO_NINGUNO;
+                personaje_ptr->estadoActivo.duracionTurnos = 0;
+                personaje_ptr->estadoActivo.magnitud = 0;
                 printf("Encuentras una planta medicinal y la aplicas sobre la herida.\n");
                 printf("El veneno deja de afectarte.\n");
             } else {
@@ -253,30 +283,30 @@ void eventoEntreFases(Personaje *personaje) {
             }
             break;
         case 8:
-        case 9:
-        case 10:
             printf("Un pequeno robot de apoyo emerge de entre los escombros.\n");
             printf("\"Sobreviviente detectado. Preparando asistencia.\"\n");
 
             switch (numeroAleatorio(1, 3)) {
                 case 1:
                     printf("El robot te ofrece dos pociones de curacion.\n");
-                    printf("Aun no puedes guardarlas, pero sabes donde encontrarlas.\n");
+                    agregarRecompensa(inventario_ptr, ITEM_VIDA, 100);
+                    agregarRecompensa(inventario_ptr, ITEM_VIDA, 100);
                     break;
                 case 2:
                     printf("El robot te ofrece dos frascos de veneno para tus armas.\n");
-                    printf("Aun no puedes guardarlos, pero sabes donde encontrarlos.\n");
+                    agregarRecompensa(inventario_ptr, ITEM_VENENO, 5);
+                    agregarRecompensa(inventario_ptr, ITEM_VENENO, 5);
                     break;
                 case 3:
-                    personaje->vidaMax += 10;
-                    personaje->vida += 10;
-                    personaje->ataque += 10;
-                    personaje->defensa += 10;
+                    personaje_ptr->vidaMax += 10;
+                    personaje_ptr->vida += 10;
+                    personaje_ptr->ataque += 10;
+                    personaje_ptr->defensa += 10;
                     printf("El robot calibra tu equipo y refuerza tu cuerpo.\n");
                     printf("Vida maxima +10, ataque +10 y defensa +10.\n");
                     printf("Ahora tienes %d/%d de vida, %d de ataque y %d de defensa.\n",
-                           personaje->vida, personaje->vidaMax,
-                           personaje->ataque, personaje->defensa);
+                           personaje_ptr->vida, personaje_ptr->vidaMax,
+                           personaje_ptr->ataque, personaje_ptr->defensa);
                     break;
             }
             break;

@@ -16,10 +16,10 @@
 void inicializarColoresTerminal(void);
 
 // Devuelve el codigo de estilo o una cadena vacia si la terminal no lo admite.
-const char *estiloTerminal(const char *codigo);
+const char *estiloTerminal(const char *codigo_ptr);
 
 // Muestra lineas dentro de un marco de terminal de ancho fijo.
-void mostrarCajaTerminal(const char *titulo, const char *lineas[], int cantidadLineas, const char *color);
+void mostrarCajaTerminal(const char *titulo_ptr, const char *lineas_ptr[], int cantidadLineas, const char *color_ptr);
 
 // Inicializa la semilla del generador de numeros aleatorios (llamar una vez en main).
 void inicializarRandom(void);

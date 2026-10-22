@@ -16,22 +16,25 @@ typedef struct {
     int vidaMax;
     int defensa;
     int ataque;
-    Estado estadoActivo;
-} Enemigo;
+    Estado_t estadoActivo;
+} Enemigo_t;
 
 // Crea un enemigo con sus stats iniciales (definidos segun la zona).
-Enemigo crearEnemigo(const char *nombre, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque);
+Enemigo_t crearEnemigo(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque);
 
 // Muestra por consola los datos actuales del enemigo.
-void mostrarEnemigo(const Enemigo *enemigo);
+void mostrarEnemigo(const Enemigo_t *enemigo_ptr);
 
 // Devuelve 1 si el enemigo sigue con vida, 0 si fue derrotado.
-int estaVivoEnemigo(const Enemigo *enemigo);
+int estaVivoEnemigo(const Enemigo_t *enemigo_ptr);
 
 // Aplica un nuevo estado alterado al enemigo.
-void aplicarEstadoEnemigo(Enemigo *enemigo, Estado estado);
+void aplicarEstadoEnemigo(Enemigo_t *enemigo_ptr, Estado_t estado);
+
+// Aplica o renueva veneno; no reemplaza otro estado alterado.
+int aplicarVenenoEnemigo(Enemigo_t *enemigo_ptr, int danoPorTurno, int duracionTurnos);
 
 // Procesa el estado activo al final de un turno.
-void actualizarEstadoEnemigo(Enemigo *enemigo);
+void actualizarEstadoEnemigo(Enemigo_t *enemigo_ptr);
 
 #endif

@@ -19,8 +19,8 @@
 // Piezas del motor (publicas, reutilizables y testeables)
 // ============================================================
 
-EfectoGrupal crearEfectoGrupal(void) {
-    EfectoGrupal efecto;
+EfectoGrupal_t crearEfectoGrupal(void) {
+    EfectoGrupal_t efecto;
     efecto.tipo = EFECTO_GRUPAL_INACTIVO;
     efecto.turnosRestantes = 0;
     return efecto;
@@ -35,7 +35,7 @@ int calcularDanoArea(int ataque, int defensa) {
     return calcularDano(ataque / 2 + AREA_BONUS, defensa);
 }
 
-int ataqueEfectivo(Personaje personaje) {
+int ataqueEfectivo(Personaje_t personaje) {
     if (personaje.estadoActivo.tipo == ESTADO_DEBILITADO) {
         return personaje.ataque * (100 - personaje.estadoActivo.magnitud) / 100;
     }
@@ -43,98 +43,98 @@ int ataqueEfectivo(Personaje personaje) {
 }
 
 // Aplica el critico grupal de Isaac si esta activo.
-static int aplicarCriticoGrupal(int dano, EfectoGrupal efecto) {
+static int aplicarCriticoGrupal(int dano, EfectoGrupal_t efecto) {
     if (efecto.tipo == EFECTO_GRUPAL_CRITICO) {
         return dano * CRITICO_GRUPAL_PORCENTAJE / 100;
     }
     return dano;
 }
 
-static void recibirDanoEnemigo(Enemigo *objetivo, int dano) {
-    objetivo->vida -= dano;
-    if (objetivo->vida < 0) {
-        objetivo->vida = 0;
+static void recibirDanoEnemigo(Enemigo_t *objetivo_ptr, int dano) {
+    objetivo_ptr->vida -= dano;
+    if (objetivo_ptr->vida < 0) {
+        objetivo_ptr->vida = 0;
     }
     printf("  %s recibe %d de dano (vida %d/%d)\n",
-           objetivo->nombre, dano, objetivo->vida, objetivo->vidaMax);
-    if (!estaVivoEnemigo(objetivo)) {
-        printf("  %s fue derrotado.\n", objetivo->nombre);
+           objetivo_ptr->nombre, dano, objetivo_ptr->vida, objetivo_ptr->vidaMax);
+    if (!estaVivoEnemigo(objetivo_ptr)) {
+        printf("  %s fue derrotado.\n", objetivo_ptr->nombre);
     }
 }
 
-void ataqueIndividual(Personaje atacante, Enemigo *objetivo, EfectoGrupal efecto) {
-    int dano = calcularDano(ataqueEfectivo(atacante), objetivo->defensa);
+void ataqueIndividual(Personaje_t atacante, Enemigo_t *objetivo_ptr, EfectoGrupal_t efecto) {
+    int dano = calcularDano(ataqueEfectivo(atacante), objetivo_ptr->defensa);
     dano = aplicarCriticoGrupal(dano, efecto);
-    printf("%s ataca a %s.\n", atacante.nombre, objetivo->nombre);
-    recibirDanoEnemigo(objetivo, dano);
+    printf("%s ataca a %s.\n", atacante.nombre, objetivo_ptr->nombre);
+    recibirDanoEnemigo(objetivo_ptr, dano);
 }
 
-void ataqueArea(Personaje atacante, Enemigo enemigos[], int cantEnemigos, EfectoGrupal efecto) {
+void ataqueArea(Personaje_t atacante, Enemigo_t enemigos_ptr[], int cantEnemigos, EfectoGrupal_t efecto) {
     printf("%s lanza un ataque en area.\n", atacante.nombre);
     for (int i = 0; i < cantEnemigos; i++) {
-        if (estaVivoEnemigo(&enemigos[i])) {
-            int dano = calcularDanoArea(ataqueEfectivo(atacante), enemigos[i].defensa);
+        if (estaVivoEnemigo(&enemigos_ptr[i])) {
+            int dano = calcularDanoArea(ataqueEfectivo(atacante), enemigos_ptr[i].defensa);
             dano = aplicarCriticoGrupal(dano, efecto);
-            recibirDanoEnemigo(&enemigos[i], dano);
+            recibirDanoEnemigo(&enemigos_ptr[i], dano);
         }
     }
 }
 
-void curarEquipo(Personaje equipo[], int cantPersonajes, int cantidad) {
+void curarEquipo(Personaje_t equipo_ptr[], int cantPersonajes, int cantidad) {
     for (int i = 0; i < cantPersonajes; i++) {
-        if (estaVivoPersonaje(&equipo[i])) {
-            equipo[i].vida += cantidad;
-            if (equipo[i].vida > equipo[i].vidaMax) {
-                equipo[i].vida = equipo[i].vidaMax;
+        if (estaVivoPersonaje(&equipo_ptr[i])) {
+            equipo_ptr[i].vida += cantidad;
+            if (equipo_ptr[i].vida > equipo_ptr[i].vidaMax) {
+                equipo_ptr[i].vida = equipo_ptr[i].vidaMax;
             }
-            printf("  %s se cura (vida %d/%d)\n", equipo[i].nombre, equipo[i].vida, equipo[i].vidaMax);
+            printf("  %s se cura (vida %d/%d)\n", equipo_ptr[i].nombre, equipo_ptr[i].vida, equipo_ptr[i].vidaMax);
         }
     }
 }
 
-int activarHabilidad(Personaje usuario, Personaje equipo[], int cantPersonajes, EfectoGrupal *efecto) {
-    if (efecto->tipo != EFECTO_GRUPAL_INACTIVO) {
+int activarHabilidad(Personaje_t usuario, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t *efecto_ptr) {
+    if (efecto_ptr->tipo != EFECTO_GRUPAL_INACTIVO) {
         return 0;
     }
 
     switch (usuario.habilidadEspecial) {
         case HABILIDAD_CRITICO_GRUPAL:
-            efecto->tipo = EFECTO_GRUPAL_CRITICO;
+            efecto_ptr->tipo = EFECTO_GRUPAL_CRITICO;
             printf("%s activa Critico grupal: el equipo pega x1.2 por %d turnos.\n",
                    usuario.nombre, DURACION_HABILIDAD);
             break;
         case HABILIDAD_DEFENSA_GRUPAL:
-            efecto->tipo = EFECTO_GRUPAL_DEFENSA;
+            efecto_ptr->tipo = EFECTO_GRUPAL_DEFENSA;
             printf("%s activa Defensa grupal: el equipo recibe menos dano por %d turnos.\n",
                    usuario.nombre, DURACION_HABILIDAD);
             break;
         case HABILIDAD_CURACION_GRUPAL:
-            efecto->tipo = EFECTO_GRUPAL_CURACION;
+            efecto_ptr->tipo = EFECTO_GRUPAL_CURACION;
             printf("%s activa Curacion grupal.\n", usuario.nombre);
-            curarEquipo(equipo, cantPersonajes, CURACION_GRUPAL);
+            curarEquipo(equipo_ptr, cantPersonajes, CURACION_GRUPAL);
             break;
     }
 
-    efecto->turnosRestantes = DURACION_HABILIDAD;
+    efecto_ptr->turnosRestantes = DURACION_HABILIDAD;
     return 1;
 }
 
-void iniciarRonda(Personaje equipo[], int cantPersonajes, EfectoGrupal efecto) {
+void iniciarRonda(Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t efecto) {
     if (efecto.tipo == EFECTO_GRUPAL_CURACION && efecto.turnosRestantes > 0) {
         printf("La curacion grupal sigue actuando.\n");
-        curarEquipo(equipo, cantPersonajes, CURACION_GRUPAL);
+        curarEquipo(equipo_ptr, cantPersonajes, CURACION_GRUPAL);
     }
 }
 
 // Elige al azar un personaje vivo. Devuelve su indice, o -1 si no queda ninguno.
-static int elegirObjetivoAleatorio(Personaje equipo[], int cantPersonajes) {
-    int vivos = quedanPersonajesVivos(equipo, cantPersonajes);
+static int elegirObjetivoAleatorio(Personaje_t equipo_ptr[], int cantPersonajes) {
+    int vivos = quedanPersonajesVivos(equipo_ptr, cantPersonajes);
     if (vivos == 0) {
         return -1;
     }
     int elegido = numeroAleatorio(1, vivos);
     for (int i = 0; i < cantPersonajes; i++) {
-        if (estaVivoPersonaje(&equipo[i])) {
+        if (estaVivoPersonaje(&equipo_ptr[i])) {
             elegido--;
             if (elegido == 0) {
                 return i;
@@ -144,64 +144,64 @@ static int elegirObjetivoAleatorio(Personaje equipo[], int cantPersonajes) {
     return -1;
 }
 
-void turnoEnemigo(Enemigo atacante, Personaje equipo[], int cantPersonajes, EfectoGrupal efecto) {
-    int indice = elegirObjetivoAleatorio(equipo, cantPersonajes);
+void turnoEnemigo(Enemigo_t atacante, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t efecto) {
+    int indice = elegirObjetivoAleatorio(equipo_ptr, cantPersonajes);
     if (indice == -1) {
         return;
     }
 
-    int defensa = equipo[indice].defensa;
+    int defensa = equipo_ptr[indice].defensa;
     if (efecto.tipo == EFECTO_GRUPAL_DEFENSA) {
         defensa = defensa * DEFENSA_GRUPAL_PORCENTAJE / 100;
     }
     int dano = calcularDano(atacante.ataque, defensa);
 
-    printf("%s ataca a %s.\n", atacante.nombre, equipo[indice].nombre);
+    printf("%s ataca a %s.\n", atacante.nombre, equipo_ptr[indice].nombre);
     if (atacante.habilidad == HABILIDAD_ENEMIGO_CRITICO && numeroAleatorio(1, 100) <= CRITICO_ENEMIGO_CHANCE) {
         dano = dano * CRITICO_ENEMIGO_PORCENTAJE / 100;
         printf("  Golpe critico!\n");
     }
 
-    equipo[indice].vida -= dano;
-    if (equipo[indice].vida < 0) {
-        equipo[indice].vida = 0;
+    equipo_ptr[indice].vida -= dano;
+    if (equipo_ptr[indice].vida < 0) {
+        equipo_ptr[indice].vida = 0;
     }
     printf("  %s recibe %d de dano (vida %d/%d)\n",
-           equipo[indice].nombre, dano, equipo[indice].vida, equipo[indice].vidaMax);
+           equipo_ptr[indice].nombre, dano, equipo_ptr[indice].vida, equipo_ptr[indice].vidaMax);
 
-    if (!estaVivoPersonaje(&equipo[indice])) {
-        printf("  %s cayo en combate.\n", equipo[indice].nombre);
+    if (!estaVivoPersonaje(&equipo_ptr[indice])) {
+        printf("  %s cayo en combate.\n", equipo_ptr[indice].nombre);
     } else if (atacante.habilidad == HABILIDAD_ENEMIGO_TRAMPA && numeroAleatorio(1, 100) <= TRAMPA_CHANCE) {
-        Estado debilitado = { ESTADO_DEBILITADO, DEBILITADO_DURACION, DEBILITADO_REDUCCION };
-        aplicarEstadoPersonaje(&equipo[indice], debilitado);
-        printf("  %s cae en una trampa: queda debilitado.\n", equipo[indice].nombre);
+        Estado_t debilitado = { ESTADO_DEBILITADO, DEBILITADO_DURACION, DEBILITADO_REDUCCION };
+        aplicarEstadoPersonaje(&equipo_ptr[indice], debilitado);
+        printf("  %s cae en una trampa: queda debilitado.\n", equipo_ptr[indice].nombre);
     }
 }
 
-void cerrarRonda(EfectoGrupal *efecto) {
-    if (efecto->turnosRestantes > 0) {
-        efecto->turnosRestantes--;
-        if (efecto->turnosRestantes == 0) {
-            efecto->tipo = EFECTO_GRUPAL_INACTIVO;
+void cerrarRonda(EfectoGrupal_t *efecto_ptr) {
+    if (efecto_ptr->turnosRestantes > 0) {
+        efecto_ptr->turnosRestantes--;
+        if (efecto_ptr->turnosRestantes == 0) {
+            efecto_ptr->tipo = EFECTO_GRUPAL_INACTIVO;
             printf("El efecto de la habilidad especial termino.\n");
         }
     }
 }
 
-int quedanPersonajesVivos(Personaje equipo[], int cantPersonajes) {
+int quedanPersonajesVivos(Personaje_t equipo_ptr[], int cantPersonajes) {
     int vivos = 0;
     for (int i = 0; i < cantPersonajes; i++) {
-        if (estaVivoPersonaje(&equipo[i])) {
+        if (estaVivoPersonaje(&equipo_ptr[i])) {
             vivos++;
         }
     }
     return vivos;
 }
 
-int quedanEnemigosVivos(Enemigo enemigos[], int cantEnemigos) {
+int quedanEnemigosVivos(Enemigo_t enemigos_ptr[], int cantEnemigos) {
     int vivos = 0;
     for (int i = 0; i < cantEnemigos; i++) {
-        if (estaVivoEnemigo(&enemigos[i])) {
+        if (estaVivoEnemigo(&enemigos_ptr[i])) {
             vivos++;
         }
     }
@@ -212,35 +212,35 @@ int quedanEnemigosVivos(Enemigo enemigos[], int cantEnemigos) {
 // Bucle interactivo
 // ============================================================
 
-static void mostrarEstadoCombate(Personaje equipo[], int cantPersonajes, Enemigo enemigos[], int cantEnemigos) {
+static void mostrarEstadoCombate(Personaje_t equipo_ptr[], int cantPersonajes, Enemigo_t enemigos_ptr[], int cantEnemigos) {
     printf("\n--- Tu equipo ---\n");
     for (int i = 0; i < cantPersonajes; i++) {
-        if (estaVivoPersonaje(&equipo[i])) {
-            mostrarPersonaje(&equipo[i]);
+        if (estaVivoPersonaje(&equipo_ptr[i])) {
+            mostrarPersonaje(&equipo_ptr[i]);
         }
     }
     printf("--- Enemigos ---\n");
     for (int i = 0; i < cantEnemigos; i++) {
-        if (estaVivoEnemigo(&enemigos[i])) {
-            mostrarEnemigo(&enemigos[i]);
+        if (estaVivoEnemigo(&enemigos_ptr[i])) {
+            mostrarEnemigo(&enemigos_ptr[i]);
         }
     }
 }
 
 // Muestra los enemigos numerados y devuelve el indice de uno vivo.
-static int elegirEnemigo(Enemigo enemigos[], int cantEnemigos) {
+static int elegirEnemigo(Enemigo_t enemigos_ptr[], int cantEnemigos) {
     printf("Elegi a quien atacar:\n");
     for (int i = 0; i < cantEnemigos; i++) {
-        if (estaVivoEnemigo(&enemigos[i])) {
-            printf("%d. %s (vida %d/%d)\n", i + 1, enemigos[i].nombre, enemigos[i].vida, enemigos[i].vidaMax);
+        if (estaVivoEnemigo(&enemigos_ptr[i])) {
+            printf("%d. %s (vida %d/%d)\n", i + 1, enemigos_ptr[i].nombre, enemigos_ptr[i].vida, enemigos_ptr[i].vidaMax);
         } else {
-            printf("%d. %s (derrotado)\n", i + 1, enemigos[i].nombre);
+            printf("%d. %s (derrotado)\n", i + 1, enemigos_ptr[i].nombre);
         }
     }
     printf("Elija una opcion: ");
     while (1) {
         int indice = leerOpcionMenu(1, cantEnemigos) - 1;
-        if (estaVivoEnemigo(&enemigos[indice])) {
+        if (estaVivoEnemigo(&enemigos_ptr[indice])) {
             return indice;
         }
         printf("Ese enemigo ya fue derrotado. Elegi otro: ");
@@ -249,85 +249,111 @@ static int elegirEnemigo(Enemigo enemigos[], int cantEnemigos) {
 
 static const char *nombreTipoItem(TipoItem tipo) {
     switch (tipo) {
-        case ITEM_VIDA:    return "Vida";
-        case ITEM_ATAQUE:  return "Ataque";
-        case ITEM_DEFENSA: return "Defensa";
+        case ITEM_VIDA:    return "Pocion de vida";
+        case ITEM_VENENO:  return "Pocion de veneno";
     }
     return "?";
 }
 
 // Muestra el inventario y devuelve el indice del item elegido.
-static int elegirItem(const Inventario *inventario) {
+static int elegirItem(const Inventario_t *inventario_ptr) {
     printf("Elegi un item:\n");
-    for (int i = 0; i < inventario->cantidad; i++) {
-        printf("%d. %s +%d\n", i + 1, nombreTipoItem(inventario->items[i].tipo), inventario->items[i].valor);
+    for (int i = 0; i < inventario_ptr->cantidad; i++) {
+        if (inventario_ptr->items[i].tipo == ITEM_VENENO) {
+            printf("%d. %s (%d de dano por turno)\n", i + 1,
+                   nombreTipoItem(inventario_ptr->items[i].tipo), inventario_ptr->items[i].valor);
+        } else {
+            printf("%d. %s (+%d de vida)\n", i + 1,
+                   nombreTipoItem(inventario_ptr->items[i].tipo), inventario_ptr->items[i].valor);
+        }
     }
     printf("Elija una opcion: ");
-    return leerOpcionMenu(1, inventario->cantidad) - 1;
+    return leerOpcionMenu(1, inventario_ptr->cantidad) - 1;
 }
 
 // Turno de un personaje: menu de acciones. Repite el menu si la opcion no esta disponible.
-static void turnoPersonaje(Personaje equipo[], int cantPersonajes, int actual,
-                           Enemigo enemigos[], int cantEnemigos,
-                           Inventario *inventario, EfectoGrupal *efecto) {
+static void turnoPersonaje(Personaje_t equipo_ptr[], int cantPersonajes, int actual,
+                           Enemigo_t enemigos_ptr[], int cantEnemigos,
+                           Inventario_t *inventario_ptr, EfectoGrupal_t *efecto_ptr) {
+    int pocionUsada = 0;
+
     while (1) {
-        printf("\nTurno de %s:\n", equipo[actual].nombre);
+        printf("\nTurno de %s:\n", equipo_ptr[actual].nombre);
         printf("1. Atacar a un enemigo\n");
         printf("2. Ataque en area\n");
         printf("3. Habilidad especial%s\n",
-               efecto->tipo != EFECTO_GRUPAL_INACTIVO ? " (activa)" : "");
-        printf("4. Usar item\n");
+               efecto_ptr->tipo != EFECTO_GRUPAL_INACTIVO ? " (activa)" : "");
+        printf("4. Usar pocion%s\n", pocionUsada ? " (ya usada este turno)" : "");
         printf("Elija una opcion: ");
         
         switch (leerOpcionMenu(1, 4)) {
             case 1: {
-                int objetivo = elegirEnemigo(enemigos, cantEnemigos);
-                ataqueIndividual(equipo[actual], &enemigos[objetivo], *efecto);
+                int objetivo = elegirEnemigo(enemigos_ptr, cantEnemigos);
+                ataqueIndividual(equipo_ptr[actual], &enemigos_ptr[objetivo], *efecto_ptr);
                 return;
             }
             case 2:
-                ataqueArea(equipo[actual], enemigos, cantEnemigos, *efecto);
+                ataqueArea(equipo_ptr[actual], enemigos_ptr, cantEnemigos, *efecto_ptr);
                 return;
             case 3:
-                if (activarHabilidad(equipo[actual], equipo, cantPersonajes, efecto)) {
+                if (activarHabilidad(equipo_ptr[actual], equipo_ptr, cantPersonajes, efecto_ptr)) {
                     return;
                 }
                 printf("La habilidad especial ya esta activa.\n");
                 break;
             case 4:
-                if (inventario != NULL && inventario->cantidad > 0) {
-                    usarItem(inventario, elegirItem(inventario), &equipo[actual]);
-                    return;
+                if (pocionUsada) {
+                    printf("Ya usaste una pocion este turno; todavia puedes realizar una accion normal.\n");
+                    break;
                 }
-                printf("No tenes items.\n");
+                if (inventario_ptr == NULL || inventario_ptr->cantidad == 0) {
+                    printf("No tenes pociones.\n");
+                    break;
+                }
+                {
+                    int indiceItem = elegirItem(inventario_ptr);
+                    Enemigo_t *objetivoEnemigo_ptr = NULL;
+                    if (inventario_ptr->items[indiceItem].tipo == ITEM_VENENO) {
+                        int indiceEnemigo = elegirEnemigo(enemigos_ptr, cantEnemigos);
+                        objetivoEnemigo_ptr = &enemigos_ptr[indiceEnemigo];
+                    }
+                    if (usarItem(inventario_ptr, indiceItem, &equipo_ptr[actual], objetivoEnemigo_ptr)) {
+                        pocionUsada = 1;
+                        printf("La pocion no consume tu accion: aun podes atacar o usar tu habilidad.\n");
+                    } else if (inventario_ptr->items[indiceItem].tipo == ITEM_VIDA) {
+                        printf("No podes usar esa pocion ahora; se conserva en la bolsa.\n");
+                    } else {
+                        printf("Ese enemigo ya tiene otro estado alterado; la pocion se conserva.\n");
+                    }
+                }
                 break;
         }
     }
 }
 
-int iniciarCombate(Personaje equipo[], int cantPersonajes, Enemigo enemigos[], int cantEnemigos, Inventario *inventario) {
-    EfectoGrupal efecto = crearEfectoGrupal();
+int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Enemigo_t enemigos_ptr[], int cantEnemigos, Inventario_t *inventario_ptr) {
+    EfectoGrupal_t efecto = crearEfectoGrupal();
     int ronda = 1;
 
     printf("\n===== COMBATE =====\n");
     while (1) {
         printf("\n===== Ronda %d =====\n", ronda);
-        iniciarRonda(equipo, cantPersonajes, efecto);
-        mostrarEstadoCombate(equipo, cantPersonajes, enemigos, cantEnemigos);
+        iniciarRonda(equipo_ptr, cantPersonajes, efecto);
+        mostrarEstadoCombate(equipo_ptr, cantPersonajes, enemigos_ptr, cantEnemigos);
 
-        for (int i = 0; i < cantPersonajes && quedanEnemigosVivos(enemigos, cantEnemigos); i++) {
-            if (!estaVivoPersonaje(&equipo[i])) {
+        for (int i = 0; i < cantPersonajes && quedanEnemigosVivos(enemigos_ptr, cantEnemigos); i++) {
+            if (!estaVivoPersonaje(&equipo_ptr[i])) {
                 continue;
             }
-            if (equipo[i].estadoActivo.tipo == ESTADO_ATURDIDO) {
-                printf("\n%s esta aturdido y pierde el turno.\n", equipo[i].nombre);
+            if (equipo_ptr[i].estadoActivo.tipo == ESTADO_ATURDIDO) {
+                printf("\n%s esta aturdido y pierde el turno.\n", equipo_ptr[i].nombre);
             } else {
-                turnoPersonaje(equipo, cantPersonajes, i, enemigos, cantEnemigos, inventario, &efecto);
+                turnoPersonaje(equipo_ptr, cantPersonajes, i, enemigos_ptr, cantEnemigos, inventario_ptr, &efecto);
             }
-            actualizarEstadoPersonaje(&equipo[i]);
+            actualizarEstadoPersonaje(&equipo_ptr[i]);
         }
 
-        if (!quedanEnemigosVivos(enemigos, cantEnemigos)) {
+        if (!quedanEnemigosVivos(enemigos_ptr, cantEnemigos)) {
             printf("\nVictoria! Todos los enemigos fueron derrotados.\n");
             registrarLog("Combate ganado");
             return 1;
@@ -335,18 +361,18 @@ int iniciarCombate(Personaje equipo[], int cantPersonajes, Enemigo enemigos[], i
 
         printf("\n");
         for (int j = 0; j < cantEnemigos; j++) {
-            if (!estaVivoEnemigo(&enemigos[j])) {
+            if (!estaVivoEnemigo(&enemigos_ptr[j])) {
                 continue;
             }
-            if (enemigos[j].estadoActivo.tipo == ESTADO_ATURDIDO) {
-                printf("%s esta aturdido y pierde el turno.\n", enemigos[j].nombre);
+            if (enemigos_ptr[j].estadoActivo.tipo == ESTADO_ATURDIDO) {
+                printf("%s esta aturdido y pierde el turno.\n", enemigos_ptr[j].nombre);
             } else {
-                turnoEnemigo(enemigos[j], equipo, cantPersonajes, efecto);
+                turnoEnemigo(enemigos_ptr[j], equipo_ptr, cantPersonajes, efecto);
             }
-            actualizarEstadoEnemigo(&enemigos[j]);
+            actualizarEstadoEnemigo(&enemigos_ptr[j]);
         }
 
-        if (!quedanPersonajesVivos(equipo, cantPersonajes)) {
+        if (!quedanPersonajesVivos(equipo_ptr, cantPersonajes)) {
             printf("\nDerrota. Tu equipo cayo en combate.\n");
             registrarLog("Combate perdido");
             return 0;

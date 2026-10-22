@@ -19,21 +19,21 @@ void inicializarColoresTerminal(void) {
 #endif
 }
 
-const char *estiloTerminal(const char *codigo) {
-    return coloresHabilitados ? codigo : "";
+const char *estiloTerminal(const char *codigo_ptr) {
+    return coloresHabilitados ? codigo_ptr : "";
 }
 
-void mostrarCajaTerminal(const char *titulo, const char *lineas[], int cantidadLineas, const char *color) {
-    const char *estilo = estiloTerminal(color);
-    const char *reset = estiloTerminal(COLOR_RESET);
+void mostrarCajaTerminal(const char *titulo_ptr, const char *lineas_ptr[], int cantidadLineas, const char *color_ptr) {
+    const char *estilo_ptr = estiloTerminal(color_ptr);
+    const char *reset_ptr = estiloTerminal(COLOR_RESET);
 
-    printf("%s+----------------------------------------------------------+%s\n", estilo, reset);
-    printf("%s| %-56.56s |%s\n", estilo, titulo, reset);
-    printf("%s+----------------------------------------------------------+%s\n", estilo, reset);
+    printf("%s+----------------------------------------------------------+%s\n", estilo_ptr, reset_ptr);
+    printf("%s| %-56.56s |%s\n", estilo_ptr, titulo_ptr, reset_ptr);
+    printf("%s+----------------------------------------------------------+%s\n", estilo_ptr, reset_ptr);
     for (int i = 0; i < cantidadLineas; i++) {
-        printf("%s| %-56.56s |%s\n", estilo, lineas[i], reset);
+        printf("%s| %-56.56s |%s\n", estilo_ptr, lineas_ptr[i], reset_ptr);
     }
-    printf("%s+----------------------------------------------------------+%s\n", estilo, reset);
+    printf("%s+----------------------------------------------------------+%s\n", estilo_ptr, reset_ptr);
 }
 
 void inicializarRandom(void) {

@@ -1,37 +1,41 @@
 #ifndef ITEMS_H
 #define ITEMS_H
 
+#include "enemigos.h"
 #include "personajes.h"
+
+#define SLOTS_POR_PERSONAJE 5
+#define MAX_PERSONAJES_INVENTARIO 3
+#define MAX_SLOTS_INVENTARIO (SLOTS_POR_PERSONAJE * MAX_PERSONAJES_INVENTARIO)
 
 typedef enum {
     ITEM_VIDA,
-    ITEM_ATAQUE,
-    ITEM_DEFENSA
+    ITEM_VENENO
 } TipoItem;
 
 typedef struct {
     TipoItem tipo;
     int valor;
-    int esGrupal;
-} Item;
+} Item_t;
 
-// Inventario con memoria dinamica: crece con realloc a medida que hace falta.
 typedef struct {
-    Item *items;
+    Item_t items[MAX_SLOTS_INVENTARIO];
     int cantidad;
     int capacidad;
-} Inventario;
+} Inventario_t;
 
-// Reserva un inventario vacio con una capacidad inicial.
-Inventario *crearInventario(int capacidadInicial);
+// Crea una bolsa compartida con cinco espacios por personaje desbloqueado.
+Inventario_t crearInventario(int cantPersonajesDesbloqueados);
 
-// Agrega un item al inventario, agrandando el arreglo con realloc si hace falta.
-void agregarItem(Inventario *inventario, Item item);
+// Actualiza la capacidad sin perder objetos; devuelve 0 si la nueva capacidad no alcanza.
+int actualizarCapacidadInventario(Inventario_t *inventario_ptr, int cantPersonajesDesbloqueados);
 
-// Aplica el efecto del item sobre un personaje y lo saca del inventario.
-void usarItem(Inventario *inventario, int indice, Personaje *objetivo);
+// Agrega un consumible si queda espacio; devuelve 1 si lo agrego.
+int agregarItem(Inventario_t *inventario_ptr, Item_t item);
 
-// Libera toda la memoria pedida para el inventario.
-void liberarInventario(Inventario *inventario);
+// Usa y consume el objeto solo si su efecto pudo aplicarse.
+int usarItem(Inventario_t *inventario_ptr, int indice, Personaje_t *usuario_ptr, Enemigo_t *objetivoEnemigo_ptr);
+
+void mostrarInventario(const Inventario_t *inventario_ptr);
 
 #endif

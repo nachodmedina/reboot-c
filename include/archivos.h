@@ -2,6 +2,8 @@
 #define ARCHIVOS_H
 
 #include "personajes.h"
+#include "items.h"
+#include "progresion.h"
 
 #define ARCHIVO_PARTIDA "partida.dat"
 #define ARCHIVO_LOG "juego.log"
@@ -16,12 +18,14 @@ typedef enum {
 } ModoJuego;
 
 
-// Guarda el estado del equipo de personajes en un archivo binario.
-void guardarPartida(const Personaje equipo[], int cantPersonajes);
+// Guarda equipo, desbloqueos, mejoras acumuladas e inventario compartido.
+int guardarPartida(const char *nombreArchivo_ptr, const Personaje_t equipo_ptr[], int cantPersonajes,
+                   const int desbloqueados_ptr[], const Inventario_t *inventario_ptr,
+                   const ProgresoPartida_t *progreso_ptr);
 
-// Carga el equipo de personajes desde el archivo de partida guardada.
-// Devuelve 1 si pudo cargar, 0 si no habia partida guardada.
-int cargarPartida(Personaje equipo[], int cantPersonajes);
+// Carga los datos guardados; devuelve 1 si el archivo es valido.
+int cargarPartida(const char *nombreArchivo_ptr, Personaje_t equipo_ptr[], int cantPersonajes,
+                  int desbloqueados_ptr[], Inventario_t *inventario_ptr, ProgresoPartida_t *progreso_ptr);
 
 
 // Borra el archivo de partida guardada. Pensada para el modo dificil,
@@ -30,6 +34,6 @@ int cargarPartida(Personaje equipo[], int cantPersonajes);
 void eliminarPartida(void);
 
 // Agrega una linea al archivo de log del juego (eventos importantes).
-void registrarLog(const char *mensaje);
+void registrarLog(const char *mensaje_ptr);
 
 #endif
