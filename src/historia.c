@@ -102,12 +102,14 @@ void mostrarIntroduccionMundo(void) {
 static const char *textoHabilidadDesbloqueada(TipoHabilidadEspecial habilidad) {
     switch (habilidad) {
         case HABILIDAD_CRITICO_GRUPAL:
-            return "El dagas, gastadas hasta hace un momento, ahora tienen unos bordes que no\n"
-                   "parece de este siglo. Isaac entiende, sin que nadie se lo explique,\n"
+            return "El dagas, gastadas hasta hace un momento, ahora tienen unos bordes\n"
+                    "que no parece de este siglo. \n"
+                   "Isaac entiende, sin que nadie se lo explique,\n"
                    "que su instinto asesino se ha afilado: su proximo golpe sera letal.\n";
         case HABILIDAD_DEFENSA_GRUPAL:
             return "El espadon viejo, curtido de tantos entrenamientos sin gracia, ahora\n"
-                   "responde con un peso distinto. Dante siente que su guardia es\n"
+                   "responde con un peso distinto."
+                  "Dante siente que su guardia es\n"
                    "impenetrable, un escudo absoluto capaz de protegerlo.\n";
         case HABILIDAD_CURACION_GRUPAL:
             return "El baston desgastado, el mismo que cargo siempre sin saber por que,\n"
@@ -220,7 +222,9 @@ void mostrarSalidaDeRaiz(const Personaje_t *personaje_ptr) {
 // datos de la struct Zona_t (nombre y descripcion) en vez de textos sueltos
 // escritos a mano en cada lugar donde se entra a una zona.
 void mostrarEntradaZona(const Zona_t *zona_ptr) {
-    mostrarTextoEnCaja(zona_ptr->nombre, zona_ptr->descripcion, COLOR_BLANCO);
+    mostrarTextoEnCajaConTituloEstilizado(zona_ptr->nombre, zona_ptr->descripcion,
+                                          COLOR_BLANCO, COLOR_AMARILLO,
+                                          ESTILO_NEGRITA);
     pausar();
 }
 

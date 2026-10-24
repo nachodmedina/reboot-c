@@ -68,6 +68,20 @@ static void imprimirLineaCaja(const char *linea_ptr, int ancho, const char *colo
     printf(" ║%s\n", reset_ptr);
 }
 
+static void imprimirTituloCaja(const char *titulo_ptr, const char *colorBorde_ptr,
+                               const char *colorTitulo_ptr, const char *estiloTitulo_ptr) {
+    int caracteres = cantidadCaracteresUtf8(titulo_ptr);
+    const char *colorBordeAplicado_ptr = estiloTerminal(colorBorde_ptr);
+
+    printf("%s║ %s%s%s%s%s", colorBordeAplicado_ptr,
+           estiloTerminal(colorTitulo_ptr), estiloTerminal(estiloTitulo_ptr),
+           titulo_ptr, estiloTerminal(COLOR_RESET), colorBordeAplicado_ptr);
+    for (int i = caracteres; i < ANCHO_CAJA; i++) {
+        printf(" ");
+    }
+    printf(" ║%s\n", estiloTerminal(COLOR_RESET));
+}
+
 static void imprimirLineaAjustada(char *linea_ptr, int ancho, const char *color_ptr) {
     imprimirLineaCaja(linea_ptr, ancho, color_ptr);
     linea_ptr[0] = '\0';
@@ -173,11 +187,19 @@ static void imprimirTextoAjustado(const char *texto_ptr, int ancho, const char *
 }
 
 void mostrarTextoEnCaja(const char *titulo_ptr, const char *texto_ptr, const char *color_ptr) {
+    mostrarTextoEnCajaConTituloEstilizado(titulo_ptr, texto_ptr, color_ptr,
+                                          color_ptr, "");
+}
+
+void mostrarTextoEnCajaConTituloEstilizado(const char *titulo_ptr, const char *texto_ptr,
+                                          const char *color_ptr,
+                                          const char *colorTitulo_ptr,
+                                          const char *estiloTitulo_ptr) {
     int mostrarTitulo = titulo_ptr != NULL && titulo_ptr[0] != '\0';
 
     imprimirBordeCaja("╔", "╗", color_ptr);
     if (mostrarTitulo) {
-        imprimirLineaCaja(titulo_ptr, ANCHO_CAJA, color_ptr);
+        imprimirTituloCaja(titulo_ptr, color_ptr, colorTitulo_ptr, estiloTitulo_ptr);
         imprimirBordeCaja("╠", "╣", color_ptr);
     }
     imprimirTextoAjustado(texto_ptr, ANCHO_CAJA, color_ptr);
@@ -245,10 +267,12 @@ void pausar(void) {
 static void mostrarOpcionesMenu(const char *opciones_ptr[], int cantidadOpciones, int seleccionado) {
     for (int i = 0; i < cantidadOpciones; i++) {
         if (i == seleccionado) {
-            printf("%s> %s%s\n", estiloTerminal(COLOR_AMARILLO),
+            printf("%s%s> %s%s\n", estiloTerminal(COLOR_AMARILLO),
+                   estiloTerminal(ESTILO_NEGRITA),
                    opciones_ptr[i], estiloTerminal(COLOR_RESET));
         } else {
-            printf("  %s\n", opciones_ptr[i]);
+            printf("%s  %s%s\n", estiloTerminal(COLOR_CYAN), opciones_ptr[i],
+                   estiloTerminal(COLOR_RESET));
         }
     }
     printf("Flechas para elegir, Enter para confirmar: ");
@@ -280,7 +304,8 @@ int leerOpcionMenu(const char *opciones_ptr[], int cantidadOpciones) {
 
     if (!cursorHabilitado) {
         for (int i = 0; i < cantidadOpciones; i++) {
-            printf("%d. %s\n", i + 1, opciones_ptr[i]);
+            printf("%s%d. %s%s\n", estiloTerminal(COLOR_CYAN), i + 1,
+                   opciones_ptr[i], estiloTerminal(COLOR_RESET));
         }
         printf("Elija una opcion: ");
         return leerOpcionNumerica(cantidadOpciones);
@@ -314,7 +339,8 @@ int leerOpcionMenu(const char *opciones_ptr[], int cantidadOpciones) {
     }
 #else
     for (int i = 0; i < cantidadOpciones; i++) {
-        printf("%d. %s\n", i + 1, opciones_ptr[i]);
+        printf("%s%d. %s%s\n", estiloTerminal(COLOR_CYAN), i + 1,
+               opciones_ptr[i], estiloTerminal(COLOR_RESET));
     }
     printf("Elija una opcion: ");
     return leerOpcionNumerica(cantidadOpciones);

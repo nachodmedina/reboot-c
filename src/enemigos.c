@@ -18,10 +18,15 @@ Enemigo_t crearEnemigo(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, i
     return enemigo;
 }
 
+int esJefeEnemigo(const Enemigo_t *enemigo_ptr) {
+    return enemigo_ptr != NULL && strcmp(enemigo_ptr->nombre, "Spectre") == 0;
+}
+
 void mostrarEnemigo(const Enemigo_t *enemigo_ptr) {
+    const char *color_ptr = esJefeEnemigo(enemigo_ptr) ? COLOR_AMARILLO : COLOR_ROJO;
     printf("%s%s%s%s - Vida: %d/%d - Ataque: %d - Defensa: %d%s\n",
-           estiloTerminal(COLOR_ROJO), estiloTerminal(ESTILO_NEGRITA),
-           enemigo_ptr->nombre, estiloTerminal(COLOR_ROJO),
+           estiloTerminal(color_ptr), estiloTerminal(ESTILO_NEGRITA),
+           enemigo_ptr->nombre, estiloTerminal(color_ptr),
            enemigo_ptr->vida, enemigo_ptr->vidaMax, enemigo_ptr->ataque,
            enemigo_ptr->defensa, estiloTerminal(COLOR_RESET));
 }
@@ -53,9 +58,12 @@ void actualizarEstadoEnemigo(Enemigo_t *enemigo_ptr) {
         if (enemigo_ptr->vida < 0) {
             enemigo_ptr->vida = 0;
         }
-        printf("%s recibe %d de dano por veneno (vida %d/%d).\n",
-               enemigo_ptr->nombre, enemigo_ptr->estadoActivo.magnitud,
-               enemigo_ptr->vida, enemigo_ptr->vidaMax);
+        const char *color_ptr = esJefeEnemigo(enemigo_ptr) ? COLOR_AMARILLO : COLOR_ROJO;
+        printf("%s%s%s%s%s recibe %d de dano por veneno (vida %d/%d).%s\n",
+               estiloTerminal(color_ptr), estiloTerminal(ESTILO_NEGRITA),
+               enemigo_ptr->nombre, estiloTerminal(COLOR_RESET), estiloTerminal(color_ptr),
+               enemigo_ptr->estadoActivo.magnitud,
+               enemigo_ptr->vida, enemigo_ptr->vidaMax, estiloTerminal(COLOR_RESET));
     }
     if (enemigo_ptr->estadoActivo.tipo != ESTADO_NINGUNO && enemigo_ptr->estadoActivo.duracionTurnos > 0) {
         enemigo_ptr->estadoActivo.duracionTurnos--;

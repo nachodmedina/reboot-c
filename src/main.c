@@ -72,7 +72,9 @@ int main(void) {
 // ============================================================
 
 static void mostrarMenuPrincipal(void) {
-    printf("\n===== Reboot C =====\n\n");
+    printf("\n%s%s===== Reboot C =====%s\n\n",
+           estiloTerminal(COLOR_MAGENTA), estiloTerminal(ESTILO_NEGRITA),
+           estiloTerminal(COLOR_RESET));
 }
 
 static void crearEquipo(Personaje_t equipo_ptr[]) {

@@ -17,15 +17,11 @@
 
 static void imprimirNombreCombate(const char *color_ptr, const char *nombre_ptr) {
     printf("%s%s%s%s", estiloTerminal(color_ptr), estiloTerminal(ESTILO_NEGRITA),
-           nombre_ptr, estiloTerminal(color_ptr));
+           nombre_ptr, estiloTerminal(COLOR_RESET));
 }
 
-static void imprimirAccionCombate(const char *color_ptr, const char *actor_ptr,
-                                  const char *accion_ptr, const char *objetivo_ptr) {
-    imprimirNombreCombate(color_ptr, actor_ptr);
-    printf(" %s ", accion_ptr);
-    imprimirNombreCombate(color_ptr, objetivo_ptr);
-    printf(".%s\n", estiloTerminal(COLOR_RESET));
+static const char *colorNombreEnemigo(const Enemigo_t *enemigo_ptr) {
+    return esJefeEnemigo(enemigo_ptr) ? COLOR_AMARILLO : COLOR_ROJO;
 }
 
 static void imprimirMensajeCombate(const char *color_ptr, const char *nombre_ptr,
@@ -74,18 +70,22 @@ static void recibirDanoEnemigo(Enemigo_t *objetivo_ptr, int dano) {
     if (objetivo_ptr->vida < 0) {
         objetivo_ptr->vida = 0;
     }
-    imprimirNombreCombate(COLOR_ROJO, objetivo_ptr->nombre);
+    imprimirNombreCombate(colorNombreEnemigo(objetivo_ptr), objetivo_ptr->nombre);
     printf(" recibe %d de dano (vida %d/%d)%s\n", dano, objetivo_ptr->vida,
            objetivo_ptr->vidaMax, estiloTerminal(COLOR_RESET));
     if (!estaVivoEnemigo(objetivo_ptr)) {
-        imprimirMensajeCombate(COLOR_ROJO, objetivo_ptr->nombre, "fue derrotado.");
+        imprimirMensajeCombate(colorNombreEnemigo(objetivo_ptr), objetivo_ptr->nombre,
+                               "fue derrotado.");
     }
 }
 
 void ataqueIndividual(Personaje_t atacante, Enemigo_t *objetivo_ptr, EfectoGrupal_t efecto) {
     int dano = calcularDano(ataqueEfectivo(atacante), objetivo_ptr->defensa);
     dano = aplicarCriticoGrupal(dano, efecto);
-    imprimirAccionCombate(COLOR_VERDE, atacante.nombre, "ataca a", objetivo_ptr->nombre);
+    imprimirNombreCombate(COLOR_VERDE, atacante.nombre);
+    printf(" ataca a ");
+    imprimirNombreCombate(colorNombreEnemigo(objetivo_ptr), objetivo_ptr->nombre);
+    printf(".%s\n", estiloTerminal(COLOR_RESET));
     recibirDanoEnemigo(objetivo_ptr, dano);
 }
 
@@ -181,7 +181,11 @@ void turnoEnemigo(Enemigo_t atacante, Personaje_t equipo_ptr[], int cantPersonaj
     }
     int dano = calcularDano(atacante.ataque, defensa);
 
-    imprimirAccionCombate(COLOR_ROJO, atacante.nombre, "ataca a", equipo_ptr[indice].nombre);
+    const char *color_ptr = esJefeEnemigo(&atacante) ? COLOR_AMARILLO : COLOR_ROJO;
+    imprimirNombreCombate(color_ptr, atacante.nombre);
+    printf(" ataca a ");
+    imprimirNombreCombate(COLOR_VERDE, equipo_ptr[indice].nombre);
+    printf(".%s\n", estiloTerminal(COLOR_RESET));
     if (atacante.habilidad == HABILIDAD_ENEMIGO_CRITICO && numeroAleatorio(1, 100) <= CRITICO_ENEMIGO_CHANCE) {
         dano = dano * CRITICO_ENEMIGO_PORCENTAJE / 100;
         printf("%s  Golpe critico!%s\n", estiloTerminal(COLOR_ROJO), estiloTerminal(COLOR_RESET));
@@ -430,7 +434,8 @@ int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Enemigo_t enemi
                 continue;
             }
             if (enemigos_ptr[j].estadoActivo.tipo == ESTADO_ATURDIDO) {
-                imprimirMensajeCombate(COLOR_ROJO, enemigos_ptr[j].nombre,
+                imprimirMensajeCombate(colorNombreEnemigo(&enemigos_ptr[j]),
+                                       enemigos_ptr[j].nombre,
                                        "esta aturdido y pierde el turno.");
             } else {
                 turnoEnemigo(enemigos_ptr[j], equipo_ptr, cantPersonajes, efecto);

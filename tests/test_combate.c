@@ -41,6 +41,15 @@ static void testCalcularDano(void) {
     assert(calcularDano(30, 80) == 0);
 }
 
+static void testIdentificarJefePorNombre(void) {
+    Enemigo_t jefe = crearSpectre();
+    Enemigo_t enemigo = crearCentinela();
+
+    assert(esJefeEnemigo(&jefe));
+    assert(!esJefeEnemigo(&enemigo));
+    assert(!esJefeEnemigo(NULL));
+}
+
 static void testDanoArea(void) {
     assert(calcularDanoArea(80, 8) == 47);   // 80/2 + 15 - 8
     assert(calcularDanoArea(80, 60) == 0);
@@ -370,6 +379,7 @@ static void simularZona1(void) {
 
 int main(int argc, char *argv_ptr[]) {
     testCalcularDano();
+    testIdentificarJefePorNombre();
     testDanoArea();
     testAtaqueIndividualYCritico();
     testAtaqueAreaIgnoraMuertos();

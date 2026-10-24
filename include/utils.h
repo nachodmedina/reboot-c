@@ -26,6 +26,12 @@ void limpiarPantallaTerminal(void);
 // El titulo_ptr puede ser NULL o vacio para omitir el encabezado.
 void mostrarTextoEnCaja(const char *titulo_ptr, const char *texto_ptr, const char *color_ptr);
 
+// Muestra una escena con estilo independiente para el encabezado.
+void mostrarTextoEnCajaConTituloEstilizado(const char *titulo_ptr, const char *texto_ptr,
+                                          const char *color_ptr,
+                                          const char *colorTitulo_ptr,
+                                          const char *estiloTitulo_ptr);
+
 // Imprime arte ASCII respetando exactamente los espacios de cada linea.
 void mostrarArteASCII(const char *const lineas_ptr[], int cantidadLineas);
 

@@ -22,6 +22,9 @@ typedef struct {
 // Crea un enemigo con sus stats iniciales (definidos segun la zona).
 Enemigo_t crearEnemigo(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque);
 
+// Indica si el enemigo actual es un jefe.
+int esJefeEnemigo(const Enemigo_t *enemigo_ptr);
+
 // Muestra por consola los datos actuales del enemigo.
 void mostrarEnemigo(const Enemigo_t *enemigo_ptr);
 
