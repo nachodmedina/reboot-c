@@ -69,6 +69,9 @@ void mostrarEncuentroEnemigos(const Personaje_t *personaje_ptr, const char *amen
 
 void mostrarPostBatalla(const Personaje_t *personaje_ptr);
 
+// Muestra el hallazgo de una mejora tras vencer al jefe de la zona.
+void mostrarHallazgoMejora(void);
+
 // Muestra como Sephirot detecta la mejora y anuncia el contrabonus enemigo.
 void mostrarReaccionSephirot(const char *atributoEnemigo_ptr, int aumentoAcumulado);
 

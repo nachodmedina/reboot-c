@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../include/enemigos.h"
+#include "../include/utils.h"
 
 Enemigo_t crearEnemigo(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque) {
     Enemigo_t enemigo;
@@ -18,9 +19,11 @@ Enemigo_t crearEnemigo(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, i
 }
 
 void mostrarEnemigo(const Enemigo_t *enemigo_ptr) {
-    printf("%s - Vida: %d/%d - Ataque: %d - Defensa: %d\n",
-           enemigo_ptr->nombre, enemigo_ptr->vida, enemigo_ptr->vidaMax,
-           enemigo_ptr->ataque, enemigo_ptr->defensa);
+    printf("%s%s%s%s - Vida: %d/%d - Ataque: %d - Defensa: %d%s\n",
+           estiloTerminal(COLOR_ROJO), estiloTerminal(ESTILO_NEGRITA),
+           enemigo_ptr->nombre, estiloTerminal(COLOR_ROJO),
+           enemigo_ptr->vida, enemigo_ptr->vidaMax, enemigo_ptr->ataque,
+           enemigo_ptr->defensa, estiloTerminal(COLOR_RESET));
 }
 
 int estaVivoEnemigo(const Enemigo_t *enemigo_ptr) {

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../include/personajes.h"
+#include "../include/utils.h"
 
 Personaje_t crearPersonaje(const char *nombre_ptr, const char *arma_ptr, TipoHabilidadEspecial habilidad, int vidaMax, int defensa, int ataque) {
     Personaje_t personaje;
@@ -21,9 +22,11 @@ Personaje_t crearPersonaje(const char *nombre_ptr, const char *arma_ptr, TipoHab
 
 void mostrarPersonaje(const Personaje_t *personaje_ptr) {
     // TODO: mejorar formato de impresion cuando este definido el combate.
-    printf("%s (%s) - Vida: %d/%d - Ataque: %d - Defensa: %d\n",
-           personaje_ptr->nombre, personaje_ptr->arma, personaje_ptr->vida, personaje_ptr->vidaMax,
-           personaje_ptr->ataque, personaje_ptr->defensa);
+    printf("%s%s%s%s (%s) - Vida: %d/%d - Ataque: %d - Defensa: %d%s\n",
+           estiloTerminal(COLOR_VERDE), estiloTerminal(ESTILO_NEGRITA),
+           personaje_ptr->nombre, estiloTerminal(COLOR_VERDE), personaje_ptr->arma,
+           personaje_ptr->vida, personaje_ptr->vidaMax, personaje_ptr->ataque,
+           personaje_ptr->defensa, estiloTerminal(COLOR_RESET));
 }
 
 int estaVivoPersonaje(const Personaje_t *personaje_ptr) {

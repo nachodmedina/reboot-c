@@ -10,7 +10,7 @@ OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 TEST_BIN = test_combate
 TEST_SRCS = tests/test_combate.c $(filter-out $(SRC_DIR)/main.c,$(SRCS))
 TEST_PROGRESION_BIN = test_progresion
-TEST_PROGRESION_SRCS = tests/test_progresion.c $(SRC_DIR)/progresion.c $(SRC_DIR)/personajes.c $(SRC_DIR)/enemigos.c
+TEST_PROGRESION_SRCS = tests/test_progresion.c $(SRC_DIR)/progresion.c $(SRC_DIR)/personajes.c $(SRC_DIR)/enemigos.c $(SRC_DIR)/utils.c
 
 .PHONY: all clean test
 

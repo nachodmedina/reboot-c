@@ -34,27 +34,34 @@ static void probarCombate(void);
 // ============================================================
 int main(void) {
     inicializarRandom();
+    inicializarColoresTerminal();
 
     int opcion;
+    const char *opcionesMenu_ptr[] = {
+        "Nueva partida",
+        "Cargar partida",
+        "Salir",
+        "Probar combate (temporal)"
+    };
     do {
         mostrarMenuPrincipal();
-        opcion = leerOpcionMenu(1, 4);
+        opcion = leerOpcionMenu(opcionesMenu_ptr, 4);
 
         switch (opcion) {
-            case 1:
+            case 0:
                 nuevaPartida();
                 break;
-            case 2:
+            case 1:
                 cargarPartidaExistente();
                 break;
-            case 3:
+            case 2:
                 printf("\nHasta la proxima.\n");
                 break;
-            case 4:
+            case 3:
                 probarCombate();
                 break;
         }
-    } while (opcion != 3);
+    } while (opcion != 2);
 
     return 0;
 }
@@ -65,17 +72,12 @@ int main(void) {
 // ============================================================
 
 static void mostrarMenuPrincipal(void) {
-    printf("\n===== Reboot C =====\n");
-    printf("1. Nueva partida\n");
-    printf("2. Cargar partida\n");
-    printf("3. Salir\n");
-    printf("4. Probar combate (temporal)\n");
-    printf("Elija una opcion: ");
+    printf("\n===== Reboot C =====\n\n");
 }
 
 static void crearEquipo(Personaje_t equipo_ptr[]) {
-    equipo_ptr[0] = crearPersonaje("Isaac", "Espada de Excabilur", HABILIDAD_CRITICO_GRUPAL,  320, 40, 80);
-    equipo_ptr[1] = crearPersonaje("Dante", "Lanza de Rebellion", HABILIDAD_DEFENSA_GRUPAL, 320, 40, 80);
+    equipo_ptr[0] = crearPersonaje("Isaac", "Dagas de Excabilur", HABILIDAD_CRITICO_GRUPAL,  320, 40, 80);
+    equipo_ptr[1] = crearPersonaje("Dante", "Espadon de Rebellion", HABILIDAD_DEFENSA_GRUPAL, 320, 40, 80);
     equipo_ptr[2] = crearPersonaje("Frieren", "Baston de la Perdida", HABILIDAD_CURACION_GRUPAL, 320, 40, 80);
 }
 
@@ -84,12 +86,13 @@ static void probarCombate(void) {
     Personaje_t equipo[CANT_PERSONAJES];
     crearEquipo(equipo);
 
-    printf("\n1. Pelear con un solo personaje\n");
-    printf("2. Pelear con el equipo completo\n");
-    printf("Elija una opcion: ");
+    const char *opcionesEquipo_ptr[] = {
+        "Pelear con un solo personaje",
+        "Pelear con el equipo completo"
+    };
     int cantPersonajes = 1;
     Personaje_t luchadores[CANT_PERSONAJES];
-    if (leerOpcionMenu(1, 2) == 1) {
+    if (leerOpcionMenu(opcionesEquipo_ptr, 2) == 0) {
         luchadores[0] = equipo[seleccionarPersonajeInicial(equipo, CANT_PERSONAJES)];
     } else {
         cantPersonajes = CANT_PERSONAJES;
@@ -101,15 +104,22 @@ static void probarCombate(void) {
     // "zona" es una copia local: se puede pelear directo contra sus enemigos.
     Zona_t zona = crearZonaCampoCeniza();
     printf("\nElegi la fase de %s:\n", zona.nombre);
+    char opcionesFases[ MAX_FASES_ZONA ][120];
+    const char *opcionesFases_ptr[MAX_FASES_ZONA];
     for (int i = 0; i < zona.cantFases; i++) {
-        printf("%d. Fase %d:", i + 1, i + 1);
+        int longitud = snprintf(opcionesFases[i], sizeof(opcionesFases[i]),
+                                "Fase %d: ", i + 1);
         for (int j = 0; j < zona.fases[i].cantEnemigos; j++) {
-            printf("%s %s", j == 0 ? "" : ",", zona.fases[i].enemigos[j].nombre);
+            int restantes = (int) sizeof(opcionesFases[i]) - longitud;
+            if (restantes > 1) {
+                longitud += snprintf(&opcionesFases[i][longitud], (size_t) restantes,
+                                     "%s%s", j == 0 ? "" : ", ",
+                                     zona.fases[i].enemigos[j].nombre);
+            }
         }
-        printf("\n");
+        opcionesFases_ptr[i] = opcionesFases[i];
     }
-    printf("Elija una opcion: ");
-    Fase_t *fase_ptr = &zona.fases[leerOpcionMenu(1, zona.cantFases) - 1];
+    Fase_t *fase_ptr = &zona.fases[leerOpcionMenu(opcionesFases_ptr, zona.cantFases)];
 
     Inventario_t inventario = crearInventario(cantPersonajes);
     Item_t pocionVida = { ITEM_VIDA, 100 };
@@ -127,31 +137,39 @@ static void probarCombate(void) {
 // valor solo puede ser MODO_NORMAL o MODO_DIFICIL, nada mas.
 static ModoJuego seleccionarModoJuego(void) {
     printf("\nElegi el modo de juego:\n");
-    printf("1. Normal (podes guardar tu progreso)\n");
-    printf("2. Dificil (si el equipo cae en combate, se borra la partida)\n");
-    printf("Elija una opcion: ");
+    const char *opcionesModo_ptr[] = {
+        "Normal (podes guardar tu progreso)",
+        "Dificil (si el equipo cae en combate, se borra la partida)"
+    };
 
-    int opcion = leerOpcionMenu(1, 2);
+    int opcion = leerOpcionMenu(opcionesModo_ptr, 2);
 
-    // opcion 1 (lo que ve el jugador) -> MODO_NORMAL
-    // opcion 2 (lo que ve el jugador) -> MODO_DIFICIL
+    // El indice 0 (primera opcion visible) -> MODO_NORMAL
+    // El indice 1 (segunda opcion visible) -> MODO_DIFICIL
     // Usamos el operador ternario (condicion ? valorSiVerdadero : valorSiFalso)
     // porque es una traduccion directa de un solo valor, sin necesitar un if
     // completo con llaves.
-    return (opcion == 1) ? MODO_NORMAL : MODO_DIFICIL;
+    return (opcion == 0) ? MODO_NORMAL : MODO_DIFICIL;
 }
 
 static TipoMejora seleccionarMejora(void) {
     printf("\nElegí una mejora para tu equipo:\n");
-    printf("1. Vida maxima +%d y vida actual +%d si sigue vivo (enemigos: +%d ataque)\n",
-           aumentoMejora(MEJORA_VIDA),
-           aumentoMejora(MEJORA_VIDA), aumentoContrabonus(MEJORA_VIDA));
-    printf("2. Ataque +%d (los enemigos ganan +%d defensa)\n",
-           aumentoMejora(MEJORA_ATAQUE), aumentoContrabonus(MEJORA_ATAQUE));
-    printf("3. Defensa +%d (los enemigos ganan +%d vida)\n",
-           aumentoMejora(MEJORA_DEFENSA), aumentoContrabonus(MEJORA_DEFENSA));
-    printf("Elija una opcion: ");
-    return (TipoMejora) leerOpcionMenu(MEJORA_VIDA, MEJORA_DEFENSA);
+    char opcionesMejora[3][120];
+    const char *opcionesMejora_ptr[3];
+    snprintf(opcionesMejora[0], sizeof(opcionesMejora[0]),
+             "Vida maxima +%d y vida actual +%d si sigue vivo (enemigos: +%d ataque)",
+             aumentoMejora(MEJORA_VIDA), aumentoMejora(MEJORA_VIDA),
+             aumentoContrabonus(MEJORA_VIDA));
+    snprintf(opcionesMejora[1], sizeof(opcionesMejora[1]),
+             "Ataque +%d (los enemigos ganan +%d defensa)",
+             aumentoMejora(MEJORA_ATAQUE), aumentoContrabonus(MEJORA_ATAQUE));
+    snprintf(opcionesMejora[2], sizeof(opcionesMejora[2]),
+             "Defensa +%d (los enemigos ganan +%d vida)",
+             aumentoMejora(MEJORA_DEFENSA), aumentoContrabonus(MEJORA_DEFENSA));
+    for (int i = 0; i < 3; i++) {
+        opcionesMejora_ptr[i] = opcionesMejora[i];
+    }
+    return (TipoMejora) (leerOpcionMenu(opcionesMejora_ptr, 3) + MEJORA_VIDA);
 }
 
 // Muestra los personajes disponibles y deja al jugador elegir con cual
@@ -159,21 +177,22 @@ static TipoMejora seleccionarMejora(void) {
 // dentro del arreglo "equipo", no el numero de opcion que ve el jugador.
 static int seleccionarPersonajeInicial(const Personaje_t equipo_ptr[], int cantPersonajes) {
     printf("\nElegi con que personaje queres empezar la historia:\n");
+    char opcionesPersonajes[ CANT_PERSONAJES ][100];
+    const char *opcionesPersonajes_ptr[CANT_PERSONAJES];
     for (int i = 0; i < cantPersonajes; i++) {
-        printf("%d. %s (arma: %s)\n", i + 1, equipo_ptr[i].nombre, equipo_ptr[i].arma);
+        snprintf(opcionesPersonajes[i], sizeof(opcionesPersonajes[i]), "%s (arma: %s)",
+                 equipo_ptr[i].nombre, equipo_ptr[i].arma);
+        opcionesPersonajes_ptr[i] = opcionesPersonajes[i];
     }
-    printf("Elija una opcion: ");
-
-    // leerOpcionMenu ya valida que el numero este dentro de rango.
-    int opcion = leerOpcionMenu(1, cantPersonajes);
-
-    return opcion - 1; // el jugador ve "1..n", el arreglo usa "0..n-1"
+    return leerOpcionMenu(opcionesPersonajes_ptr, cantPersonajes);
 }
 
 // Antes de una pelea dificil: vida al maximo y sin estados alterados.
 static void descansarEnFogata(Personaje_t luchadores_ptr[], int cantLuchadores) {
-    printf("\nEncontras los restos de una fogata todavia tibia. Descansas un rato\n");
-    printf("y recuperas todas tus fuerzas.\n");
+    mostrarTextoEnCaja(NULL,
+        "Encontras los restos de una fogata todavia tibia. Descansas un rato y "
+        "recuperas todas tus fuerzas.",
+        COLOR_BLANCO);
     for (int i = 0; i < cantLuchadores; i++) {
         luchadores_ptr[i].vida = luchadores_ptr[i].vidaMax;
         luchadores_ptr[i].estadoActivo.tipo = ESTADO_NINGUNO;
@@ -223,8 +242,8 @@ static int iniciarZona(const Zona_t *zona_ptr, Personaje_t luchadores_ptr[], int
             return 0;
         }
 
-        mostrarPostBatalla(&luchadores_ptr[0]);
         if (i + 1 < zona_ptr->cantFases && !zona_ptr->fases[i + 1].fogataAntes) {
+            mostrarPostBatalla(&luchadores_ptr[0]);
             eventoEntreFases(&luchadores_ptr[0], inventario_ptr);
         }
     }
@@ -262,6 +281,7 @@ static void nuevaPartida(void) {
         return; // no se guarda partida ni se sigue mostrando nada mas
     }
 
+    mostrarHallazgoMejora();
     TipoMejora mejora = seleccionarMejora();
     if (!aplicarMejoraEquipo(equipo, desbloqueados, CANT_PERSONAJES, mejora, &progreso)) {
         printf("No se pudo aplicar la mejora elegida.\n");

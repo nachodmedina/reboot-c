@@ -110,9 +110,28 @@ pociones o veneno, pero todavía no se pueden guardar.
 - **Guardado completo**: hoy solo se guarda el equipo y recién al terminar la zona.
   Falta guardar la zona actual, el inventario, el modo y el protagonista, y que
   "Cargar partida" retome la historia (hoy solo muestra el equipo guardado).
-- **Estilos de terminal**: ya hay helpers de colores ANSI y cajas en `utils`, pero
-  todavía no se usan.
 - Sacar la opción temporal **"Probar combate"** del menú.
+
+## Presentacion en terminal
+
+En una consola compatible, los menus de seleccion se recorren con las flechas y
+se confirman con Enter. Si la entrada no es una consola interactiva, el juego
+muestra las mismas opciones numeradas para poder elegirlas escribiendo un numero.
+Los colores usan secuencias ANSI: aliados en verde, enemigos en rojo y el numero
+de ronda en celeste. Los mensajes de combate resaltan en negrita a quienes actuan.
+La pantalla se limpia al comenzar cada ronda.
+
+Las escenas narrativas aparecen en cuadros de doble borde blanco. Los dibujos
+ASCII son espacios reservados para que se peguen manualmente:
+
+- En `src/main.c`, reemplaza el texto de `arteIsaac_ptr`, `arteDante_ptr` y
+  `arteFrieren_ptr`. Esos dibujos aparecen despues de elegir al heroe.
+- En `src/historia.c`, reemplaza el texto de `arteArmaIsaac_ptr`,
+  `arteArmaDante_ptr` y `arteArmaFrieren_ptr`. El dibujo correspondiente se
+  muestra junto al anuncio de que se consiguio el arma.
+- Mantene cada linea entre comillas y separada por comas. En una cadena C, una
+  barra invertida se escribe `\\` y una comilla doble se escribe `\"`. Respeta
+  los espacios iniciales y finales de cada linea para conservar la alineacion.
 
 ## Convenciones de nombres C
 
