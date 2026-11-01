@@ -5,7 +5,7 @@ static int tipoItemValido(TipoItem tipo) {
     return tipo == ITEM_VIDA || tipo == ITEM_VENENO;
 }
 
-static const char *nombreTipoItem(TipoItem tipo) {
+const char *nombreItem(TipoItem tipo) {
     switch (tipo) {
         case ITEM_VIDA:
             return "Pocion de vida";
@@ -13,6 +13,14 @@ static const char *nombreTipoItem(TipoItem tipo) {
             return "Pocion de veneno";
     }
     return "Objeto desconocido";
+}
+
+void describirItem(const Item_t *item_ptr, char texto_ptr[], size_t tamanio) {
+    if (item_ptr->tipo == ITEM_VENENO) {
+        snprintf(texto_ptr, tamanio, "%s (%d de dano por turno)", nombreItem(item_ptr->tipo), item_ptr->valor);
+    } else {
+        snprintf(texto_ptr, tamanio, "%s (+%d de vida)", nombreItem(item_ptr->tipo), item_ptr->valor);
+    }
 }
 
 Inventario_t crearInventario(int cantPersonajesDesbloqueados) {
@@ -72,11 +80,12 @@ int usarItem(Inventario_t *inventario_ptr, int indice, Personaje_t *usuario_ptr,
         }
         printf("%s recupera vida: %d/%d\n", usuario_ptr->nombre, usuario_ptr->vida, usuario_ptr->vidaMax);
     } else if (item.tipo == ITEM_VENENO) {
-        if (objetivoEnemigo_ptr == NULL || !aplicarVenenoEnemigo(objetivoEnemigo_ptr, item.valor, 4)) {
+        if (objetivoEnemigo_ptr == NULL ||
+            !aplicarVenenoEnemigo(objetivoEnemigo_ptr, item.valor, DURACION_VENENO_ITEM)) {
             return 0;
         }
-        printf("%s queda envenenado: recibira %d de dano durante 4 turnos.\n",
-               objetivoEnemigo_ptr->nombre, item.valor);
+        printf("%s queda envenenado: recibira %d de dano durante %d turnos.\n",
+               objetivoEnemigo_ptr->nombre, item.valor, DURACION_VENENO_ITEM);
     } else {
         return 0;
     }
@@ -99,7 +108,8 @@ void mostrarInventario(const Inventario_t *inventario_ptr) {
     }
 
     for (int i = 0; i < inventario_ptr->cantidad; i++) {
-        printf("  %d. %s (+%d)\n", i + 1,
-               nombreTipoItem(inventario_ptr->items[i].tipo), inventario_ptr->items[i].valor);
+        char descripcion[80];
+        describirItem(&inventario_ptr->items[i], descripcion, sizeof(descripcion));
+        printf("  %d. %s\n", i + 1, descripcion);
     }
 }
