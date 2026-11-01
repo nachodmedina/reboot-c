@@ -14,6 +14,15 @@
 #define TRAMPA_CHANCE              40   // % de probabilidad
 #define CRITICO_ENEMIGO_CHANCE     30   // % de probabilidad
 #define CRITICO_ENEMIGO_PORCENTAJE 150  // x1.5
+#define MITAD_DANO_PORCENTAJE      50   // Vergil: recibe la mitad
+#define REGENERACION_VIDA          30   // Tiny: vida por turno
+#define ATURDIR_CHANCE             25   // Golem: % de probabilidad
+#define ATURDIR_DURACION            1
+#define SEFIROT_AREA_CHANCE        25   // Sefirot: % de cada accion especial
+#define SEFIROT_CURACION_CHANCE    20
+#define SEFIROT_INVOCAR_CHANCE     20
+#define SEFIROT_AREA_PORCENTAJE    75   // el area pega el 75% de su ataque
+#define SEFIROT_CURACION           80
 
 static void imprimirNombreCombate(const char *color_ptr, const char *nombre_ptr) {
     printf("%s%s%s%s", estiloTerminal(color_ptr), estiloTerminal(ESTILO_NEGRITA),
@@ -66,6 +75,11 @@ static int aplicarCriticoGrupal(int dano, EfectoGrupal_t efecto) {
 }
 
 static void recibirDanoEnemigo(Enemigo_t *objetivo_ptr, int dano) {
+    if (objetivo_ptr->habilidad == HABILIDAD_ENEMIGO_MITAD_DANO) {
+        dano = dano * MITAD_DANO_PORCENTAJE / 100;
+        imprimirMensajeCombate(colorNombreEnemigo(objetivo_ptr), objetivo_ptr->nombre,
+                               "absorbe la mitad del golpe.");
+    }
     objetivo_ptr->vida -= dano;
     if (objetivo_ptr->vida < 0) {
         objetivo_ptr->vida = 0;
@@ -216,18 +230,118 @@ void turnoEnemigo(const Enemigo_t *atacante_ptr, Personaje_t equipo_ptr[], int c
         Estado_t debilitado = { ESTADO_DEBILITADO, DEBILITADO_DURACION, DEBILITADO_REDUCCION };
         aplicarEstadoPersonaje(objetivo_ptr, debilitado);
         imprimirMensajeCombate(COLOR_VERDE, objetivo_ptr->nombre, "cae en una trampa: queda debilitado.");
+    } else if (atacante_ptr->habilidad == HABILIDAD_ENEMIGO_ATURDIR && numeroAleatorio(1, 100) <= ATURDIR_CHANCE) {
+        Estado_t aturdido = { ESTADO_ATURDIDO, ATURDIR_DURACION, 0 };
+        aplicarEstadoPersonaje(objetivo_ptr, aturdido);
+        imprimirMensajeCombate(COLOR_VERDE, objetivo_ptr->nombre, "recibe un golpe aplastante: queda aturdido.");
     }
 }
 
+// Tiny: se repara al empezar su turno, sin pasar su vida maxima.
+void regenerarEnemigo(Enemigo_t *enemigo_ptr) {
+    if (enemigo_ptr->vida >= enemigo_ptr->vidaMax) {
+        return;
+    }
+    enemigo_ptr->vida += REGENERACION_VIDA;
+    if (enemigo_ptr->vida > enemigo_ptr->vidaMax) {
+        enemigo_ptr->vida = enemigo_ptr->vidaMax;
+    }
+    imprimirNombreCombate(colorNombreEnemigo(enemigo_ptr), enemigo_ptr->nombre);
+    printf(" se autorrepara (vida %d/%d)%s\n", enemigo_ptr->vida, enemigo_ptr->vidaMax,
+           estiloTerminal(COLOR_RESET));
+}
+
+static void mostrarLineaSefirot(const char *linea_ptr) {
+    printf("%s%s%s%s\n", estiloTerminal(COLOR_AMARILLO), estiloTerminal(ESTILO_NEGRITA),
+           linea_ptr, estiloTerminal(COLOR_RESET));
+}
+
+static void ataqueAreaSefirot(const Enemigo_t *sefirot_ptr, Personaje_t equipo_ptr[], int cantPersonajes,
+                              EfectoGrupal_t efecto) {
+    mostrarLineaSefirot("Sefirot no elige un blanco. Elige a los tres a la vez.");
+    int ataque = sefirot_ptr->ataque * SEFIROT_AREA_PORCENTAJE / 100;
+    for (int i = 0; i < cantPersonajes; i++) {
+        if (estaVivoPersonaje(&equipo_ptr[i])) {
+            recibirDanoPersonaje(&equipo_ptr[i], calcularDano(ataque, defensaEfectiva(&equipo_ptr[i], efecto)));
+        }
+    }
+}
+
+static void curarSefirot(Enemigo_t *sefirot_ptr) {
+    mostrarLineaSefirot("El dano que le hicieron se cierra solo, como si el Nucleo entero lo estuviera reparando.");
+    sefirot_ptr->vida += SEFIROT_CURACION;
+    if (sefirot_ptr->vida > sefirot_ptr->vidaMax) {
+        sefirot_ptr->vida = sefirot_ptr->vidaMax;
+    }
+    imprimirNombreCombate(colorNombreEnemigo(sefirot_ptr), sefirot_ptr->nombre);
+    printf(" se cura (vida %d/%d)%s\n", sefirot_ptr->vida, sefirot_ptr->vidaMax, estiloTerminal(COLOR_RESET));
+}
+
+int invocarRefuerzo(Batalla_t *batalla_ptr) {
+    if (batalla_ptr->cantRefuerzos == 0 ||
+        quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos) >= MAX_ENEMIGOS_COMBATE) {
+        return 0;
+    }
+    // Ocupa el lugar de un enemigo caido o, si no hay, uno libre al final.
+    int lugar = 0;
+    while (lugar < batalla_ptr->cantEnemigos && estaVivoEnemigo(&batalla_ptr->enemigos[lugar])) {
+        lugar++;
+    }
+    if (lugar == batalla_ptr->cantEnemigos) {
+        batalla_ptr->cantEnemigos++;
+    }
+    int elegido = numeroAleatorio(0, batalla_ptr->cantRefuerzos - 1);
+    batalla_ptr->enemigos[lugar] = batalla_ptr->refuerzos[elegido];
+
+    mostrarLineaSefirot("Algo conocido se materializa junto a Sefirot. Ya lo vencieron una vez. "
+                        "Van a tener que hacerlo de nuevo.");
+    imprimirMensajeCombate(colorNombreEnemigo(&batalla_ptr->enemigos[lugar]),
+                           batalla_ptr->enemigos[lugar].nombre, "se une al combate.");
+    return 1;
+}
+
+// Sefirot elige al azar entre ataque en area, curarse, invocar o atacar normal.
+// Si la accion elegida no se puede hacer (vida llena, sin lugar), ataca normal.
+static void turnoSefirot(Batalla_t *batalla_ptr, int indice, Personaje_t equipo_ptr[], int cantPersonajes,
+                         EfectoGrupal_t efecto) {
+    Enemigo_t *sefirot_ptr = &batalla_ptr->enemigos[indice];
+    int tirada = numeroAleatorio(1, 100);
+    if (tirada <= SEFIROT_AREA_CHANCE) {
+        ataqueAreaSefirot(sefirot_ptr, equipo_ptr, cantPersonajes, efecto);
+        return;
+    }
+    tirada -= SEFIROT_AREA_CHANCE;
+    if (tirada <= SEFIROT_CURACION_CHANCE && sefirot_ptr->vida < sefirot_ptr->vidaMax) {
+        curarSefirot(sefirot_ptr);
+        return;
+    }
+    tirada -= SEFIROT_CURACION_CHANCE;
+    if (tirada > 0 && tirada <= SEFIROT_INVOCAR_CHANCE && invocarRefuerzo(batalla_ptr)) {
+        return;
+    }
+    turnoEnemigo(sefirot_ptr, equipo_ptr, cantPersonajes, efecto);
+}
+
 void faseEnemigos(Batalla_t *batalla_ptr, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t efecto) {
-    for (int j = 0; j < batalla_ptr->cantEnemigos && quedanPersonajesVivos(equipo_ptr, cantPersonajes); j++) {
+    // Los invocados en esta fase recien actuan en la ronda siguiente.
+    int actuaEstaRonda[MAX_ENEMIGOS_COMBATE];
+    for (int j = 0; j < MAX_ENEMIGOS_COMBATE; j++) {
+        actuaEstaRonda[j] = j < batalla_ptr->cantEnemigos && estaVivoEnemigo(&batalla_ptr->enemigos[j]);
+    }
+
+    for (int j = 0; j < MAX_ENEMIGOS_COMBATE && quedanPersonajesVivos(equipo_ptr, cantPersonajes); j++) {
         Enemigo_t *enemigo_ptr = &batalla_ptr->enemigos[j];
-        if (!estaVivoEnemigo(enemigo_ptr)) {
+        if (!actuaEstaRonda[j]) {
             continue;
+        }
+        if (enemigo_ptr->habilidad == HABILIDAD_ENEMIGO_REGENERACION) {
+            regenerarEnemigo(enemigo_ptr);
         }
         if (enemigo_ptr->estadoActivo.tipo == ESTADO_ATURDIDO) {
             imprimirMensajeCombate(colorNombreEnemigo(enemigo_ptr), enemigo_ptr->nombre,
                                    "esta aturdido y pierde el turno.");
+        } else if (enemigo_ptr->habilidad == HABILIDAD_ENEMIGO_SEFIROT) {
+            turnoSefirot(batalla_ptr, j, equipo_ptr, cantPersonajes, efecto);
         } else {
             turnoEnemigo(enemigo_ptr, equipo_ptr, cantPersonajes, efecto);
         }

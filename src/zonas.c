@@ -29,6 +29,7 @@ static int agregarFase(Zona_t *zona_ptr, const char *amenaza_ptr, const Enemigo_
         fase_ptr->batalla.enemigos[i] = enemigos_ptr[i];
     }
     fase_ptr->batalla.cantEnemigos = cantEnemigos;
+    fase_ptr->batalla.cantRefuerzos = 0;
     fase_ptr->fogataAntes = fogataAntes;
     zona_ptr->cantFases++;
     return 1;

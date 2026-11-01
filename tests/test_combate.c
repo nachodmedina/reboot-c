@@ -299,13 +299,109 @@ static void testGuardarYRecuperarInventarioCompartido(void) {
     assert(remove(ruta) == 0);
 }
 
+// ============================================================
+// Habilidades de enemigos de las zonas 2 a 4
+// ============================================================
+
+static Enemigo_t crearSefirotPrueba(void) {
+    return crearJefe("Sefirot", HABILIDAD_ENEMIGO_SEFIROT, 700, 40, 96);
+}
+
 static Batalla_t batallaCon(const Enemigo_t enemigos_ptr[], int cantEnemigos) {
     Batalla_t batalla;
     for (int i = 0; i < cantEnemigos; i++) {
         batalla.enemigos[i] = enemigos_ptr[i];
     }
     batalla.cantEnemigos = cantEnemigos;
+    batalla.cantRefuerzos = 0;
     return batalla;
+}
+
+static void testMitadDeDano(void) {
+    Personaje_t isaac = crearIsaac();
+    Enemigo_t vergil = crearJefe("Vergil", HABILIDAD_ENEMIGO_MITAD_DANO, 340, 30, 76);
+    ataqueIndividual(&isaac, &vergil, crearEfectoGrupal());
+    assert(vergil.vida == 340 - 25);         // (80 - 30) / 2
+}
+
+static void testRegeneracionSinPasarElMaximo(void) {
+    Enemigo_t tiny = crearJefe("Tiny", HABILIDAD_ENEMIGO_REGENERACION, 500, 36, 90);
+    tiny.vida = 400;
+    regenerarEnemigo(&tiny);
+    assert(tiny.vida == 430);
+    tiny.vida = 490;
+    regenerarEnemigo(&tiny);
+    assert(tiny.vida == 500);
+}
+
+// Aturdir es aleatorio: algunas veces si, otras no. El aturdido dura un turno.
+static void testAturdirDuraUnTurno(void) {
+    Enemigo_t golem = crearEnemigo("Golem", HABILIDAD_ENEMIGO_ATURDIR, 260, 30, 76);
+    int aturdidos = 0;
+    for (int i = 0; i < 100; i++) {
+        Personaje_t equipo[1] = { crearIsaac() };
+        turnoEnemigo(&golem, equipo, 1, crearEfectoGrupal());
+        if (equipo[0].estadoActivo.tipo == ESTADO_ATURDIDO) {
+            aturdidos++;
+            actualizarEstadoPersonaje(&equipo[0]);   // el turno que pierde
+            assert(equipo[0].estadoActivo.tipo == ESTADO_NINGUNO);
+        }
+    }
+    assert(aturdidos > 0);
+    assert(aturdidos < 100);
+}
+
+static void testInvocarRespetaLugares(void) {
+    Enemigo_t cazador = crearCazador();
+    Enemigo_t sefirot = crearSefirotPrueba();
+
+    Enemigo_t solo[1] = { sefirot };
+    Batalla_t batalla = batallaCon(solo, 1);
+    assert(!invocarRefuerzo(&batalla));      // sin refuerzos no invoca
+
+    batalla.refuerzos[0] = cazador;
+    batalla.cantRefuerzos = 1;
+    assert(invocarRefuerzo(&batalla));       // ocupa un lugar libre al final
+    assert(batalla.cantEnemigos == 2);
+    assert(strcmp(batalla.enemigos[1].nombre, cazador.nombre) == 0);
+
+    assert(invocarRefuerzo(&batalla));
+    assert(batalla.cantEnemigos == 3);
+    assert(!invocarRefuerzo(&batalla));      // ya hay 3 vivos
+
+    batalla.enemigos[1].vida = 0;            // reemplaza a un caido, sin crecer
+    assert(invocarRefuerzo(&batalla));
+    assert(batalla.cantEnemigos == 3);
+    assert(estaVivoEnemigo(&batalla.enemigos[1]));
+    assert(strcmp(batalla.enemigos[0].nombre, "Sefirot") == 0);
+}
+
+// Sefirot elige al azar: en muchas rondas tiene que curarse e invocar alguna
+// vez, sin pasar nunca su vida maxima ni la cantidad de lugares.
+static void testSefirotCuraEInvoca(void) {
+    int curaciones = 0;
+    int invocaciones = 0;
+    for (int i = 0; i < 200; i++) {
+        Enemigo_t sefirot = crearSefirotPrueba();
+        sefirot.vida = 650;
+        Batalla_t batalla = batallaCon(&sefirot, 1);
+        batalla.refuerzos[0] = crearCazador();
+        batalla.cantRefuerzos = 1;
+        Personaje_t equipo[3] = { crearIsaac(), crearDante(), crearFrieren() };
+
+        faseEnemigos(&batalla, equipo, 3, crearEfectoGrupal());
+        assert(batalla.enemigos[0].vida <= batalla.enemigos[0].vidaMax);
+        assert(batalla.cantEnemigos <= MAX_ENEMIGOS_COMBATE);
+        if (batalla.enemigos[0].vida > 650) {
+            curaciones++;
+        }
+        if (batalla.cantEnemigos == 2) {
+            invocaciones++;
+            assert(batalla.enemigos[1].vida == batalla.enemigos[1].vidaMax);   // no actuo ni recibio dano
+        }
+    }
+    assert(curaciones > 0);
+    assert(invocaciones > 0);
 }
 
 // ============================================================
@@ -332,7 +428,9 @@ static int combateAutomatico(Personaje_t equipo_ptr[], int cantP, Batalla_t *bat
             if (!estaVivoPersonaje(&equipo_ptr[i])) {
                 continue;
             }
-            if (quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos) >= 3) {
+            if (equipo_ptr[i].estadoActivo.tipo == ESTADO_ATURDIDO) {
+                // pierde el turno
+            } else if (quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos) >= 3) {
                 ataqueArea(&equipo_ptr[i], batalla_ptr->enemigos, batalla_ptr->cantEnemigos, efecto);
             } else {
                 ataqueIndividual(&equipo_ptr[i], &batalla_ptr->enemigos[primerEnemigoVivo(batalla_ptr)], efecto);
@@ -407,6 +505,11 @@ int main(int argc, char *argv_ptr[]) {
     testCapacidadBolsaCompartida();
     testVenenoDuraCuatroTurnosYSeRenueva();
     testGuardarYRecuperarInventarioCompartido();
+    testMitadDeDano();
+    testRegeneracionSinPasarElMaximo();
+    testAturdirDuraUnTurno();
+    testInvocarRespetaLugares();
+    testSefirotCuraEInvoca();
     printf("\n===== Todos los tests pasaron =====\n");
 
     unsigned int semilla = argc > 1 ? (unsigned int) atoi(argv_ptr[1]) : 42;

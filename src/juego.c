@@ -150,7 +150,8 @@ static int iniciarZona(const Zona_t *zona_ptr, Partida_t *partida_ptr) {
         // iniciarCombate les baja la vida a los enemigos, asi que peleamos
         // contra una copia y la zona queda intacta.
         Batalla_t batalla = fase_ptr->batalla;
-        if (!aplicarContrabonusEnemigos(batalla.enemigos, batalla.cantEnemigos, &partida_ptr->progreso)) {
+        if (!aplicarContrabonusEnemigos(batalla.enemigos, batalla.cantEnemigos, &partida_ptr->progreso) ||
+            !aplicarContrabonusEnemigos(batalla.refuerzos, batalla.cantRefuerzos, &partida_ptr->progreso)) {
             printf("No se pudieron aplicar las mejoras de los enemigos.\n");
             pausar();
             return 0;

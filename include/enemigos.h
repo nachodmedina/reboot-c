@@ -5,8 +5,12 @@
 
 typedef enum {
     HABILIDAD_ENEMIGO_NINGUNA,
-    HABILIDAD_ENEMIGO_TRAMPA,   // el personaje golpeado queda debilitado 1 turno
-    HABILIDAD_ENEMIGO_CRITICO   // chance de que el golpe haga x1.5 de dano
+    HABILIDAD_ENEMIGO_TRAMPA,       // el personaje golpeado queda debilitado 1 turno
+    HABILIDAD_ENEMIGO_CRITICO,      // chance de que el golpe haga x1.5 de dano
+    HABILIDAD_ENEMIGO_MITAD_DANO,   // recibe la mitad del dano (Vergil)
+    HABILIDAD_ENEMIGO_REGENERACION, // recupera vida al empezar su turno (Tiny)
+    HABILIDAD_ENEMIGO_ATURDIR,      // chance de dejar aturdido 1 turno (Golem)
+    HABILIDAD_ENEMIGO_SEFIROT       // ataque en area, curacion o invocacion (jefe final)
 } TipoHabilidadEnemigo;
 
 typedef struct {

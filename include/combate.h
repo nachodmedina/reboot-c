@@ -6,6 +6,7 @@
 #include "items.h"
 
 #define MAX_ENEMIGOS_COMBATE 3   // enemigos vivos a la vez en un combate
+#define MAX_REFUERZOS_BATALLA 3  // unidades distintas que un jefe puede invocar
 
 typedef enum {
     EFECTO_GRUPAL_INACTIVO,
@@ -20,10 +21,13 @@ typedef struct {
     int turnosRestantes;
 } EfectoGrupal_t;
 
-// Lo que enfrenta el equipo en un combate.
+// Lo que enfrenta el equipo en un combate: los enemigos y, si el jefe puede
+// pedir ayuda, los refuerzos que tiene disponibles para invocar.
 typedef struct {
     Enemigo_t enemigos[MAX_ENEMIGOS_COMBATE];
     int cantEnemigos;                          // lugares de "enemigos" en uso
+    Enemigo_t refuerzos[MAX_REFUERZOS_BATALLA];
+    int cantRefuerzos;                         // 0 si nadie invoca
 } Batalla_t;
 
 // Crea un efecto grupal inactivo para empezar un combate.
@@ -58,7 +62,15 @@ void iniciarRonda(Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t e
 // Turno de un enemigo: elige un personaje vivo al azar y lo ataca.
 void turnoEnemigo(const Enemigo_t *atacante_ptr, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t efecto);
 
-// Turno de todos los enemigos vivos (los aturdidos pierden el turno).
+// Recupera la vida de regeneracion del enemigo, sin pasar su vida maxima.
+void regenerarEnemigo(Enemigo_t *enemigo_ptr);
+
+// Suma a la batalla una copia al azar de sus refuerzos, en el lugar de un
+// enemigo caido o en uno libre. Devuelve 0 si no hay refuerzos o lugar.
+int invocarRefuerzo(Batalla_t *batalla_ptr);
+
+// Turno de todos los enemigos vivos: regeneracion, acciones de Sefirot y
+// ataques. Los invocados durante esta fase actuan recien en la ronda siguiente.
 void faseEnemigos(Batalla_t *batalla_ptr, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t efecto);
 
 // Descuenta un turno del efecto grupal y lo limpia cuando llega a 0.
