@@ -34,8 +34,18 @@ void mostrarHallazgoMejora(void);
 // Sefirot detecta la mejora y anuncia el contrabonus enemigo.
 void mostrarReaccionSefirot(const char *atributoEnemigo_ptr, int aumentoAcumulado);
 
-// Liberacion y union de un aliado, con el arte del aliado y su arma.
-void mostrarLiberacionAliado(const Personaje_t *protagonista_ptr, const Personaje_t *aliado_ptr);
+// Liberacion del aliado que se une al cerrar la Zona 1 o la Zona 2. El texto
+// depende del protagonista; despues se muestra el arte del aliado y su arma.
+void mostrarLiberacionAliado(const Personaje_t *protagonista_ptr, const Personaje_t *aliado_ptr,
+                             int numeroZona);
+
+// Dialogo junto a la fogata antes del jefe de las Zonas 2 a 4 (en la Zona 1 no hay).
+void mostrarDescansoZona(const Personaje_t *protagonista_ptr, int numeroZona);
+
+// La caida de Sefirot, el epilogo y la pantalla final.
+void mostrarCaidaSefirot(const Personaje_t *protagonista_ptr);
+void mostrarEpilogo(const Personaje_t *protagonista_ptr);
+void mostrarFinDelJuego(void);
 
 // Evento aleatorio entre fases consecutivas: puede dar objetos, envenenar,
 // curar o mejorar al personaje.

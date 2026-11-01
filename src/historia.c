@@ -211,20 +211,222 @@ void mostrarReaccionSefirot(const char *atributoEnemigo_ptr, int aumentoAcumulad
     pausar();
 }
 
-void mostrarLiberacionAliado(const Personaje_t *protagonista_ptr, const Personaje_t *aliado_ptr) {
-    char textoNarrativa[700];
-    snprintf(textoNarrativa, sizeof(textoNarrativa),
-        "La baliza de %s comienza a parpadear y proyecta un camino entre las "
-        "ruinas. Al final, una jaula de energia mantiene prisionero a %s.\n"
-        "%s se acerca y rompe el sello de la jaula. La baliza toca el %s de %s, "
-        "y su arma empieza a transformarse.\n"
-        "%s recupera el aliento: \"Gracias. En la proxima batalla luchare a tu "
-        "lado.\"\n%s se unio a tu aventura.",
-        protagonista_ptr->nombre, aliado_ptr->nombre, protagonista_ptr->nombre,
-        aliado_ptr->arma, aliado_ptr->nombre, aliado_ptr->nombre, aliado_ptr->nombre);
-    mostrarTextoEnCaja(NULL, textoNarrativa, COLOR_BLANCO);
+// ============================================================
+// Textos del documento de diseno que cambian segun el protagonista.
+// Cada tabla se indexa con la habilidad especial del protagonista
+// (el mismo criterio que textoHabilidadDesbloqueada).
+// ============================================================
+
+// Liberacion del aliado al cerrar la Zona 1 [0] y la Zona 2 [1].
+static const char *const TEXTOS_LIBERACION[][2] = {
+    [HABILIDAD_CRITICO_GRUPAL] = {   // Isaac libera a Frieren y despues a Dante
+        "Con Spectre caído, la baliza reacciona por primera vez desde que Isaac la encontró — un "
+        "pulso leve, casi un latido, que apunta hacia una de las jaulas del asentamiento.\n\n"
+        "Adentro, una chica que no suelta un bastón roto, como si todavía esperara que sirviera para "
+        "algo. Isaac no llega a preguntar nada: la baliza responde por los dos, con el mismo brillo "
+        "que tuvo en las ruinas. El bastón deja de estar roto. O tal vez nunca lo estuvo del todo.\n\n"
+        "— También te esperaba a vos —dice Isaac, sin estar del todo seguro de a quién se lo dice: si "
+        "a Frieren, o a la baliza.",
+
+        "Vergil cae, y con él, buena parte del control que la Catedral tenía sobre los suyos. La "
+        "baliza vuelve a guiarlos, esta vez hacia las celdas más profundas, donde los conversos "
+        "guardaban a quienes todavía se negaban a \"iluminarse\".\n\n"
+        "Dante está ahí, con un ojo cubierto por una placa metálica tosca, puesta a la fuerza. El "
+        "espadón que llevaba antes de caer prisionero sigue tirado a su lado, sin filo, sin uso. La "
+        "baliza lo toca apenas, y el metal responde — no borra el ojo que le impusieron, pero sí le "
+        "devuelve el arma que era suya de verdad.\n\n"
+        "— No es la primera vez que alguien pierde algo acá adentro —dice Dante, mirándose la placa en "
+        "el ojo—. Que sea la última vez que me lo sacan sin que yo elija."
+    },
+    [HABILIDAD_DEFENSA_GRUPAL] = {   // Dante libera a Frieren y despues a Isaac
+        "Con Spectre caído, la baliza reacciona por primera vez desde que Dante la encontró — un pulso "
+        "leve que apunta hacia una de las jaulas del asentamiento.\n\n"
+        "Adentro, una chica que no suelta un bastón roto, como si todavía esperara que sirviera para "
+        "algo. La baliza responde antes de que Dante llegue a preguntar nada: el mismo brillo que tuvo "
+        "en las ruinas. El bastón deja de estar roto.\n\n"
+        "— También te esperaba a vos —dice Dante, sin estar del todo seguro de a quién se lo dice.",
+
+        "Vergil cae, y con él buena parte del control que la Catedral tenía sobre los suyos. La baliza "
+        "guía a Dante y Frieren hacia las celdas más profundas.\n\n"
+        "Isaac está ahí, con el brazo metálico que ya llevaba desde Raíz y, ahora, una placa tosca "
+        "puesta a la fuerza sobre una pierna. Las dagas que llevaba antes de caer prisionero siguen "
+        "tiradas a su lado, sin filo. La baliza las toca apenas, y el metal responde.\n\n"
+        "— No es la primera vez que alguien me saca algo sin que yo elija —dice Isaac, mirándose la "
+        "pierna—. Que sea la última."
+    },
+    [HABILIDAD_CURACION_GRUPAL] = {  // Frieren libera a Isaac y despues a Dante
+        "Con Spectre caído, la baliza reacciona por primera vez desde que Frieren la encontró — un "
+        "pulso leve que apunta hacia una de las jaulas del asentamiento.\n\n"
+        "Adentro, un chico con el brazo metálico cubierto de tierra, que no suelta unas dagas sin "
+        "filo, como si todavía esperara que sirvieran para algo. La baliza responde antes de que "
+        "Frieren llegue a preguntar nada: el mismo brillo que tuvo en las ruinas. El filo vuelve.\n\n"
+        "— También te esperaba a vos —dice Frieren, casi para sí misma.",
+
+        "Vergil cae, y con él buena parte del control que la Catedral tenía sobre los suyos. La baliza "
+        "guía a Frieren e Isaac hacia las celdas más profundas, donde los conversos guardaban a "
+        "quienes todavía se negaban a \"iluminarse\".\n\n"
+        "Dante está ahí, con un ojo cubierto por una placa metálica tosca, puesta a la fuerza. El "
+        "espadón que llevaba antes de caer prisionero sigue tirado a su lado, sin filo. La baliza lo "
+        "toca apenas, y el metal responde — no borra el ojo que le impusieron, pero sí le devuelve el "
+        "arma que era suya de verdad.\n\n"
+        "— No es la primera vez que alguien pierde algo acá adentro —dice Dante, mirándose la placa en "
+        "el ojo—. Que sea la última vez que me lo sacan sin que yo elija."
+    }
+};
+
+// Dialogo junto a la fogata antes del jefe: Catedral [0], Fundicion [1] y Nucleo [2].
+static const char *const TEXTOS_DESCANSO[][3] = {
+    [HABILIDAD_CRITICO_GRUPAL] = {
+        "La Catedral de Engranajes impone silencio incluso en el descanso. Frieren mira el bastón, "
+        "todavía extrañándose de su propio peso.\n\n"
+        "— En Raíz no llegué a nadie a tiempo —dice Isaac, casi sin querer decirlo en voz alta—. Salí "
+        "corriendo y no elegí bien a quién ayudar primero.\n\n"
+        "Frieren no responde enseguida. Cuando lo hace, es corto:\n\n"
+        "— Yo elegí. No alcanzó igual.\n\n"
+        "No hay mucho más que agregar todavía. Pero algo quedó dicho.",
+
+        "Saben lo que viene: Tiny los espera al fondo, regenerándose de cada golpe que le den. Y "
+        "después de Tiny, lo que queda es pelear contra todo lo que ya vencieron antes, camino a "
+        "Sefirot.\n\n"
+        "— Va a saber cómo peleamos —dice Frieren, sin que haga falta explicar a quién se refiere.\n\n"
+        "— Que sepa —responde Dante—. La última vez que alguien nos sorprendió, fue porque estábamos "
+        "solos. Ya no lo estamos.\n\n"
+        "Isaac mira la baliza, todavía tibia entre sus manos. No tiene respuestas nuevas que dar esta "
+        "noche. Pero por primera vez, tampoco las necesita para saber que van a llegar hasta el final.",
+
+        "La baliza, por primera vez desde Raíz, se enciende sin que nadie la toque. No es una visión "
+        "fragmentada esta vez — es casi una voz, o lo más parecido a una voz que un objeto de siglos "
+        "puede tener.\n\n"
+        "No muestra el pasado como antes. Muestra un patrón: cada vez que Sefirot cayó, algo de él "
+        "quedó. Un núcleo, un resto, una semilla dormida en algún lugar como este — esperando otro "
+        "ciclo, otros diez años, otra Raíz.\n\n"
+        "— Por eso vuelve —dice Frieren, entendiendo antes que los demás—. Nunca lo destruyeron del "
+        "todo. Solo lo hicieron dormir.\n\n"
+        "Isaac mira el túnel que sigue bajando, hacia el Núcleo. — Entonces hoy no alcanza con ganar.\n\n"
+        "— Hoy hay que asegurarse de que no quede nada para el próximo ciclo —dice Dante."
+    },
+    [HABILIDAD_DEFENSA_GRUPAL] = {
+        "La Catedral impone silencio incluso en el descanso. Dante se mira las manos, otra vez.\n\n"
+        "— Yo estaba en la puerta —dice, sin que nadie se lo pregunte—. Se suponía que esa puerta no "
+        "cedía nunca.\n\n"
+        "— No cediste vos —responde Frieren—. Cedió la puerta.\n\n"
+        "— Da lo mismo, si yo estaba ahí para sostenerla.\n\n"
+        "Frieren no insiste. Después de un silencio, agrega algo propio: — Yo elegí a quién curar "
+        "primero esa noche. No alcanzó igual.\n\n"
+        "No hay mucho más que agregar todavía. Pero algo quedó dicho.",
+
+        "— Va a saber cómo peleamos —dice Frieren.\n\n"
+        "— Que sepa —responde Isaac—. La última vez que alguien nos sorprendió, fue porque estábamos "
+        "solos. Ya no lo estamos.\n\n"
+        "Dante mira la baliza en sus manos, todavía tibia. No tiene respuestas nuevas esta noche. Pero "
+        "tampoco las necesita para saber que van a llegar hasta el final.",
+
+        "La baliza, por primera vez desde Raíz, se enciende sin que nadie la toque — esta vez en manos "
+        "de Dante. No muestra el pasado como antes. Muestra un patrón: cada vez que Sefirot cayó, algo "
+        "de él quedó. Un núcleo, un resto, una semilla dormida en algún lugar como este.\n\n"
+        "— Por eso vuelve —dice Frieren, entendiendo antes que los demás—. Nunca lo destruyeron del "
+        "todo. Solo lo hicieron dormir.\n\n"
+        "Isaac mira el túnel que sigue bajando. — Entonces hoy no alcanza con ganar.\n\n"
+        "— Hoy hay que asegurarse de que no quede nada para el próximo ciclo —dice Dante, cerrando la "
+        "mano sobre la baliza."
+    },
+    [HABILIDAD_CURACION_GRUPAL] = {
+        "La Catedral impone silencio incluso en el descanso. Isaac aprieta las dagas, otra vez.\n\n"
+        "— En Raíz se me fue gente de al lado corriendo. No elegí bien a quién ayudar primero.\n\n"
+        "— No elegiste mal —responde Frieren—. Nadie elige bien esa noche.\n\n"
+        "— Yo elegí a quién curar primero esa noche —agrega ella, después de un silencio—. No alcanzó "
+        "igual.\n\n"
+        "No hay mucho más que agregar todavía. Pero algo quedó dicho.",
+
+        "— Va a saber cómo peleamos —dice Isaac.\n\n"
+        "— Que sepa —responde Dante—. La última vez que alguien nos sorprendió, fue porque estábamos "
+        "solos. Ya no lo estamos.\n\n"
+        "Frieren mira la baliza en sus manos, todavía tibia. No tiene respuestas nuevas esta noche. "
+        "Pero tampoco las necesita para saber que van a llegar hasta el final.",
+
+        "La baliza, por primera vez desde Raíz, se enciende sin que nadie la toque — esta vez en manos "
+        "de Frieren. No muestra el pasado como antes. Muestra un patrón: cada vez que Sefirot cayó, "
+        "algo de él quedó. Un núcleo, un resto, una semilla dormida en algún lugar como este.\n\n"
+        "— Por eso vuelve —dice Frieren, casi para sí misma—. Nunca lo destruyeron del todo. Solo lo "
+        "hicieron dormir.\n\n"
+        "Isaac mira el túnel que sigue bajando. — Entonces hoy no alcanza con ganar.\n\n"
+        "— Hoy hay que asegurarse de que no quede nada para el próximo ciclo —dice Dante."
+    }
+};
+
+// La caida de Sefirot y la destruccion del Nucleo.
+static const char *const TEXTOS_CAIDA_SEFIROT[] = {
+    [HABILIDAD_CRITICO_GRUPAL] =
+        "Sefirot no explota, no grita, no tiene un último discurso. Simplemente se apaga — como algo "
+        "que finalmente se queda sin energía para seguir fingiendo que estaba vivo.\n\n"
+        "El silencio que sigue dura poco. Esta vez no hay tiempo para preguntarse qué se hace después "
+        "de una guerra.\n\n"
+        "— Hay que terminar esto de verdad —dice Isaac, ya moviéndose hacia los núcleos secundarios "
+        "que todavía zumban alrededor del cuerpo caído de Sefirot.\n\n"
+        "No pelean para salir. Pelean para que no quede nada — cada núcleo secundario, cada sistema que "
+        "todavía respira, cada resto que en otro ciclo hubiera bastado para volver a empezar. La "
+        "Fundición entera empieza a temblar antes de que lleguen a la salida.\n\n"
+        "Corren los tres juntos, con el techo del Núcleo cayendo detrás de ellos como si la Tierra "
+        "misma quisiera asegurarse de que esta vez sí fuera definitivo.",
+    [HABILIDAD_DEFENSA_GRUPAL] =
+        "Sefirot se apaga sin discursos, sin gritos, como algo que se queda sin energía para seguir "
+        "fingiendo que estaba vivo.\n\n"
+        "— Hay que terminar esto de verdad —dice Dante, ya moviéndose hacia los núcleos secundarios que "
+        "todavía zumban alrededor del cuerpo caído.\n\n"
+        "No pelean para salir. Pelean para que no quede nada — cada núcleo, cada sistema que todavía "
+        "respira. La Fundición entera empieza a temblar antes de que lleguen a la salida. Corren los "
+        "tres juntos, con el techo cayendo detrás de ellos.",
+    [HABILIDAD_CURACION_GRUPAL] =
+        "Sefirot se apaga sin discursos, sin gritos, como algo que se queda sin energía para seguir "
+        "fingiendo que estaba vivo.\n\n"
+        "— Hay que terminar esto de verdad —dice Frieren, ya moviéndose hacia los núcleos secundarios "
+        "que todavía zumban alrededor del cuerpo caído.\n\n"
+        "No pelean para salir. Pelean para que no quede nada — cada núcleo, cada sistema que todavía "
+        "respira. La Fundición entera empieza a temblar antes de que lleguen a la salida. Corren los "
+        "tres juntos, con el techo cayendo detrás de ellos."
+};
+
+static const char *const TEXTOS_EPILOGO[] = {
+    [HABILIDAD_CRITICO_GRUPAL] =
+        "Arriba, la explosión se ve incluso desde lejos — una columna de humo donde antes había una "
+        "montaña. Isaac no la mira con miedo. La mira como quien por fin ve algo terminado.\n\n"
+        "— ¿Vos creés que esto ya se acabó de verdad? —pregunta Dante.\n\n"
+        "Isaac saca la baliza del bolsillo. Ya no brilla. Por primera vez desde que la encontró, se "
+        "siente como lo que es: un objeto viejo, agotado, sin nada más que mostrar.\n\n"
+        "— Antes, alguien solo lo venció —dice—. Nosotros no dejamos nada para que vuelva.\n\n"
+        "Frieren mira el cielo, todavía gris, pero sin nada que los esté cazando mientras caminan de "
+        "vuelta hacia Raíz.\n\n"
+        "— Entonces esta vez, el ciclo se rompe acá.",
+    [HABILIDAD_DEFENSA_GRUPAL] =
+        "Arriba, la explosión se ve incluso desde lejos. Isaac la mira sin miedo, como quien por fin ve "
+        "algo terminado.\n\n"
+        "— ¿Vos creés que esto ya se acabó de verdad? —pregunta.\n\n"
+        "Dante saca la baliza del bolsillo. Ya no brilla.\n\n"
+        "— Antes, alguien solo lo venció —dice—. Nosotros no dejamos nada para que vuelva.\n\n"
+        "Frieren mira el cielo, todavía gris, pero sin nada que los esté cazando mientras caminan de "
+        "vuelta hacia Raíz.\n\n"
+        "— Entonces esta vez, el ciclo se rompe acá.",
+    [HABILIDAD_CURACION_GRUPAL] =
+        "Arriba, la explosión se ve incluso desde lejos. Dante la mira sin miedo, como quien por fin ve "
+        "algo terminado.\n\n"
+        "— ¿Vos creés que esto ya se acabó de verdad? —pregunta.\n\n"
+        "Frieren saca la baliza del bolsillo. Ya no brilla.\n\n"
+        "— Antes, alguien solo lo venció —dice—. Nosotros no dejamos nada para que vuelva.\n\n"
+        "Isaac mira el cielo, todavía gris, pero sin nada que los esté cazando mientras caminan de "
+        "vuelta hacia Raíz.\n\n"
+        "— Entonces esta vez, el ciclo se rompe acá."
+};
+
+void mostrarLiberacionAliado(const Personaje_t *protagonista_ptr, const Personaje_t *aliado_ptr,
+                             int numeroZona) {
+    if (numeroZona < 1 || numeroZona > 2) {
+        return;
+    }
+    mostrarTextoEnCaja(NULL, TEXTOS_LIBERACION[protagonista_ptr->habilidadEspecial][numeroZona - 1],
+                       COLOR_BLANCO);
     pausar();
 
+    char textoNarrativa[300];
     limpiarPantallaTerminal();
     mostrarTextoEnCaja(NULL, aliado_ptr->nombre, COLOR_BLANCO);
     mostrarArtePersonaje(aliado_ptr->habilidadEspecial);
@@ -238,6 +440,36 @@ void mostrarLiberacionAliado(const Personaje_t *protagonista_ptr, const Personaj
     mostrarTextoEnCaja("ARMA CONSEGUIDA", textoNarrativa, COLOR_BLANCO);
     mostrarArteArma(aliado_ptr->habilidadEspecial);
     pausar();
+}
+
+void mostrarDescansoZona(const Personaje_t *protagonista_ptr, int numeroZona) {
+    if (numeroZona < 2 || numeroZona > 4) {
+        return;   // Campo Ceniza no tiene dialogo: el protagonista esta solo
+    }
+    mostrarTextoEnCaja(numeroZona == 4 ? "EL ULTIMO RESPIRO" : "JUNTO AL FUEGO",
+                       TEXTOS_DESCANSO[protagonista_ptr->habilidadEspecial][numeroZona - 2],
+                       COLOR_BLANCO);
+    pausar();
+}
+
+void mostrarCaidaSefirot(const Personaje_t *protagonista_ptr) {
+    limpiarPantallaTerminal();
+    mostrarTextoEnCaja("LA CAIDA DE SEFIROT", TEXTOS_CAIDA_SEFIROT[protagonista_ptr->habilidadEspecial],
+                       COLOR_BLANCO);
+    pausar();
+}
+
+void mostrarEpilogo(const Personaje_t *protagonista_ptr) {
+    limpiarPantallaTerminal();
+    mostrarTextoEnCaja("EPILOGO", TEXTOS_EPILOGO[protagonista_ptr->habilidadEspecial], COLOR_BLANCO);
+    pausar();
+}
+
+void mostrarFinDelJuego(void) {
+    limpiarPantallaTerminal();
+    mostrarTextoEnCajaConTituloEstilizado("FIN",
+        "El ciclo se rompio. Gracias por jugar Reboot C.",
+        COLOR_BLANCO, COLOR_AMARILLO, ESTILO_NEGRITA);
 }
 
 void eventoEntreFases(Personaje_t *personaje_ptr, Inventario_t *inventario_ptr) {

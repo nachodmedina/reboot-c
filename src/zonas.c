@@ -55,7 +55,7 @@ static Zona_t crearZonaCampoCeniza(void) {
 
     Enemigo_t centinela = crearCentinela();
     Enemigo_t cazador = crearCazador();
-    Enemigo_t spectre = crearJefe("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
+    Enemigo_t spectre = crearJefe("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 64);
 
     Enemigo_t fase1[] = { centinela, centinela };
     agregarFase(&zona, "dos perros mecanicos emergen entre la ceniza y corren directo hacia vos.",
@@ -77,8 +77,133 @@ static Zona_t crearZonaCampoCeniza(void) {
     return zona;
 }
 
+// ============================================================
+// Zona 2: Catedral de Engranajes (de a dos)
+// ============================================================
+
+static Enemigo_t crearEscudero(void) {
+    return crearEnemigo("Escudero", HABILIDAD_ENEMIGO_NINGUNA, 150, 24, 58);
+}
+
+static Enemigo_t crearGuardian(void) {
+    return crearEnemigo("Guardián", HABILIDAD_ENEMIGO_NINGUNA, 150, 20, 64);
+}
+
+static Zona_t crearZonaCatedral(void) {
+    Zona_t zona = crearZona(2, "Catedral de Engranajes",
+        "Una catedral levantada con engranajes y chatarra. Adentro, los conversos\n"
+        "le rezan a las maquinas y custodian a los que se niegan a iluminarse.",
+        "entre las naves de la Catedral");
+
+    Enemigo_t escudero = crearEscudero();
+    Enemigo_t guardian = crearGuardian();
+    Enemigo_t vergil = crearJefe("Vergil", HABILIDAD_ENEMIGO_MITAD_DANO, 380, 30, 80);
+
+    Enemigo_t fase1[] = { escudero, escudero };
+    agregarFase(&zona, "dos escuderos conversos cierran el paso con sus escudos remachados.",
+                fase1, 2, 0);
+
+    Enemigo_t fase2[] = { escudero, guardian };
+    agregarFase(&zona, "un guardian baja del coro, escoltado por un escudero que reza en voz baja.",
+                fase2, 2, 0);
+
+    Enemigo_t fase3[] = { guardian, escudero, escudero };
+    agregarFase(&zona, "un guardian y dos escuderos salen de las capillas laterales al mismo tiempo.",
+                fase3, 3, 0);
+
+    Enemigo_t fase4[] = { guardian, guardian, vergil };
+    agregarFase(&zona, "frente al altar espera Vergil, mitad hombre y mitad maquina, entre dos guardianes.",
+                fase4, 3, 1);
+
+    return zona;
+}
+
+// ============================================================
+// Zona 3: La Fundicion (los tres juntos)
+// ============================================================
+
+static Enemigo_t crearMutante(void) {
+    return crearEnemigo("Mutante", HABILIDAD_ENEMIGO_NINGUNA, 190, 20, 82);
+}
+
+static Enemigo_t crearGolem(void) {
+    return crearEnemigo("Gólem", HABILIDAD_ENEMIGO_ATURDIR, 260, 30, 74);
+}
+
+static Zona_t crearZonaFundicion(void) {
+    Zona_t zona = crearZona(3, "La Fundición",
+        "Hornos que nunca se apagan y cintas que arrastran piezas a medio armar.\n"
+        "Aca las maquinas se fabrican a si mismas, y lo que sale mal sigue caminando.",
+        "entre los hornos de la Fundicion");
+
+    Enemigo_t mutante = crearMutante();
+    Enemigo_t golem = crearGolem();
+    Enemigo_t tiny = crearJefe("Tiny", HABILIDAD_ENEMIGO_REGENERACION, 500, 36, 86);
+
+    Enemigo_t fase1[] = { mutante, mutante };
+    agregarFase(&zona, "dos mutantes, unidades de ensamblaje defectuosas, se arrastran fuera de una cinta.",
+                fase1, 2, 0);
+
+    Enemigo_t fase2[] = { mutante, golem };
+    agregarFase(&zona, "un golem pesado aparta los escombros y avanza detras de un mutante.",
+                fase2, 2, 0);
+
+    Enemigo_t fase3[] = { golem, mutante, mutante };
+    agregarFase(&zona, "un golem y dos mutantes bloquean la pasarela que cruza sobre el metal fundido.",
+                fase3, 3, 0);
+
+    Enemigo_t fase4[] = { golem, golem, tiny };
+    agregarFase(&zona, "al fondo, Tiny se levanta entre dos golems: cada abolladura se le cierra sola.",
+                fase4, 3, 1);
+
+    return zona;
+}
+
+// ============================================================
+// Zona 4: El Nucleo (zona final)
+// Los "restos" de las zonas anteriores, con sus mismas stats.
+// ============================================================
+
+static Zona_t crearZonaNucleo(void) {
+    Zona_t zona = crearZona(4, "El Núcleo",
+        "El corazon de las maquinas, bajo la montaña. Aca Sefirot junta los restos\n"
+        "de todo lo que el equipo ya vencio, para cerrarle el camino una ultima vez.",
+        "por los tuneles del Nucleo");
+
+    Enemigo_t restosCampo[] = { crearCazador(), crearCazador(), crearCentinela() };
+    agregarFase(&zona, "los restos de Campo Ceniza vuelven a levantarse: dos cazadores y un perro mecanico.",
+                restosCampo, 3, 0);
+
+    Enemigo_t restosCatedral[] = { crearGuardian(), crearEscudero(), crearEscudero() };
+    agregarFase(&zona, "conversos de la Catedral salen de la oscuridad, todavia rezandole a las maquinas.",
+                restosCatedral, 3, 0);
+
+    Enemigo_t restosFundicion[] = { crearGolem(), crearMutante(), crearMutante() };
+    agregarFase(&zona, "piezas de la Fundicion se arman solas delante del equipo: un golem y dos mutantes.",
+                restosFundicion, 3, 0);
+
+    Enemigo_t jefeFinal[] = { crearJefe("Sefirot", HABILIDAD_ENEMIGO_SEFIROT, 820, 42, 100) };
+    agregarFase(&zona, "en el centro del Nucleo, Sefirot abre los ojos. Los estaba esperando.",
+                jefeFinal, 1, 1);
+
+    // Sefirot puede invocar una unidad de cada zona anterior.
+    Batalla_t *batallaFinal_ptr = &zona.fases[zona.cantFases - 1].batalla;
+    batallaFinal_ptr->refuerzos[0] = crearCazador();
+    batallaFinal_ptr->refuerzos[1] = crearGuardian();
+    batallaFinal_ptr->refuerzos[2] = crearMutante();
+    batallaFinal_ptr->cantRefuerzos = 3;
+
+    return zona;
+}
+
 Zona_t crearZonaPorNumero(int numero) {
     switch (numero) {
+        case 2:
+            return crearZonaCatedral();
+        case 3:
+            return crearZonaFundicion();
+        case 4:
+            return crearZonaNucleo();
         case 1:
         default:
             return crearZonaCampoCeniza();

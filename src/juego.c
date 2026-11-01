@@ -130,6 +130,18 @@ static void descansarEnFogata(Personaje_t luchadores_ptr[], int cantLuchadores) 
     pausar();
 }
 
+// Despues de ganar un combate queda al menos un luchador en pie.
+static Personaje_t *elegirLuchadorVivo(Partida_t *partida_ptr) {
+    int vivos[CANT_PERSONAJES];
+    int cantVivos = 0;
+    for (int i = 0; i < partida_ptr->cantDesbloqueados; i++) {
+        if (estaVivoPersonaje(&partida_ptr->equipo[i])) {
+            vivos[cantVivos++] = i;
+        }
+    }
+    return &partida_ptr->equipo[vivos[numeroAleatorio(0, cantVivos - 1)]];
+}
+
 // Juega todas las fases de la zona en orden: encuentro, combate y escena
 // post batalla. Pelean los primeros cantDesbloqueados del equipo, y lo que
 // les pasa en una fase (vida, estados) se arrastra a la siguiente.
@@ -138,12 +150,15 @@ static int iniciarZona(const Zona_t *zona_ptr, Partida_t *partida_ptr) {
     Personaje_t *luchadores_ptr = partida_ptr->equipo;
     int cantLuchadores = partida_ptr->cantDesbloqueados;
 
+    // Entre una zona y la siguiente el equipo descansa.
+    recuperarEquipo(luchadores_ptr, cantLuchadores);
     mostrarEntradaZona(zona_ptr);
     for (int i = 0; i < zona_ptr->cantFases; i++) {
         const Fase_t *fase_ptr = &zona_ptr->fases[i];
 
         if (fase_ptr->fogataAntes) {
             descansarEnFogata(luchadores_ptr, cantLuchadores);
+            mostrarDescansoZona(&luchadores_ptr[0], zona_ptr->numero);
         }
         mostrarEncuentroEnemigos(&luchadores_ptr[0], zona_ptr->recorrido, fase_ptr->amenaza);
 
@@ -170,7 +185,7 @@ static int iniciarZona(const Zona_t *zona_ptr, Partida_t *partida_ptr) {
 
         if (i + 1 < zona_ptr->cantFases && !zona_ptr->fases[i + 1].fogataAntes) {
             mostrarPostBatalla(&luchadores_ptr[0]);
-            eventoEntreFases(&luchadores_ptr[0], &partida_ptr->inventario);
+            eventoEntreFases(elegirLuchadorVivo(partida_ptr), &partida_ptr->inventario);
         }
     }
     return 1;
@@ -178,7 +193,7 @@ static int iniciarZona(const Zona_t *zona_ptr, Partida_t *partida_ptr) {
 
 // El siguiente personaje del equipo se suma: recibe las mejoras que el resto
 // ya tenia y la bolsa compartida gana lugar.
-static int unirAliado(Partida_t *partida_ptr) {
+static int unirAliado(Partida_t *partida_ptr, int numeroZona) {
     Personaje_t *aliado_ptr = &partida_ptr->equipo[partida_ptr->cantDesbloqueados];
     if (!aplicarMejorasAcumuladas(aliado_ptr, &partida_ptr->progreso) ||
         !actualizarCapacidadInventario(&partida_ptr->inventario, partida_ptr->cantDesbloqueados + 1)) {
@@ -187,13 +202,13 @@ static int unirAliado(Partida_t *partida_ptr) {
         return 0;
     }
     partida_ptr->cantDesbloqueados++;
-    mostrarLiberacionAliado(&partida_ptr->equipo[0], aliado_ptr);
+    mostrarLiberacionAliado(&partida_ptr->equipo[0], aliado_ptr, numeroZona);
     return 1;
 }
 
 // Despues de vencer al jefe de una zona: el equipo elige una mejora (y los
 // enemigos ganan su contrabonus) y, si todavia falta alguien, se une un aliado.
-static int recompensarJefe(Partida_t *partida_ptr) {
+static int recompensarJefe(Partida_t *partida_ptr, int numeroZona) {
     int desbloqueados[CANT_PERSONAJES];
     marcarDesbloqueados(partida_ptr, desbloqueados);
 
@@ -210,7 +225,7 @@ static int recompensarJefe(Partida_t *partida_ptr) {
                            contrabonusAcumulado(mejora, &partida_ptr->progreso));
 
     if (partida_ptr->cantDesbloqueados < CANT_PERSONAJES) {
-        return unirAliado(partida_ptr);
+        return unirAliado(partida_ptr, numeroZona);
     }
     return 1;
 }
@@ -224,6 +239,15 @@ static int guardarProgreso(const Partida_t *partida_ptr) {
     }
     printf("\nProgreso guardado.\n");
     return 1;
+}
+
+static void terminarJuego(const Partida_t *partida_ptr) {
+    mostrarCaidaSefirot(&partida_ptr->equipo[0]);
+    mostrarEpilogo(&partida_ptr->equipo[0]);
+    mostrarFinDelJuego();
+    mostrarEquipo(partida_ptr);
+    registrarLog("Juego completado");
+    pausar();
 }
 
 // ============================================================
@@ -247,17 +271,25 @@ void jugarPartidaNueva(void) {
     mostrarNarrativaInicial(&partida.equipo[0]);
     mostrarSalidaDeRaiz(&partida.equipo[0]);
 
-    Zona_t zona = crearZonaPorNumero(1);
-    if (!iniciarZona(&zona, &partida) || !recompensarJefe(&partida)) {
-        return;
-    }
-    mostrarEquipo(&partida);
-    if (!guardarProgreso(&partida)) {
+    for (int numero = 1; numero <= CANT_ZONAS; numero++) {
+        Zona_t zona = crearZonaPorNumero(numero);
+        if (!iniciarZona(&zona, &partida)) {
+            return;
+        }
+        if (numero == CANT_ZONAS) {
+            break;   // despues de Sefirot no hay mejora: sigue el final
+        }
+        if (!recompensarJefe(&partida, numero)) {
+            return;
+        }
+        mostrarEquipo(&partida);
+        if (!guardarProgreso(&partida)) {
+            pausar();
+            return;
+        }
         pausar();
-        return;
     }
-    printf("La siguiente zona se incorporara mas adelante.\n");
-    pausar();
+    terminarJuego(&partida);
 }
 
 // Por ahora solo muestra lo guardado; retomar la historia se suma con el
