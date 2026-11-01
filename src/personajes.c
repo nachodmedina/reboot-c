@@ -21,7 +21,6 @@ Personaje_t crearPersonaje(const char *nombre_ptr, const char *arma_ptr, TipoHab
 }
 
 void mostrarPersonaje(const Personaje_t *personaje_ptr) {
-    // TODO: mejorar formato de impresion cuando este definido el combate.
     printf("%s%s%s%s (%s) - Vida: %d/%d - Ataque: %d - Defensa: %d%s\n",
            estiloTerminal(COLOR_VERDE), estiloTerminal(ESTILO_NEGRITA),
            personaje_ptr->nombre, estiloTerminal(COLOR_VERDE), personaje_ptr->arma,
@@ -34,7 +33,7 @@ int estaVivoPersonaje(const Personaje_t *personaje_ptr) {
 }
 
 void aplicarEstadoPersonaje(Personaje_t *personaje_ptr, Estado_t estado) {
-    // TODO: definir reglas cuando ya hay un estado activo (se reemplaza o se acumula).
+    // Solo hay un estado activo: el nuevo reemplaza al anterior.
     personaje_ptr->estadoActivo = estado;
 }
 

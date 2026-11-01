@@ -28,9 +28,8 @@ int cargarPartida(const char *nombreArchivo_ptr, Personaje_t equipo_ptr[], int c
                   int desbloqueados_ptr[], Inventario_t *inventario_ptr, ProgresoPartida_t *progreso_ptr);
 
 
-// Borra el archivo de partida guardada. Pensada para el modo dificil,
-// cuando el equipo pierde un combate (todavia no se llama desde ningun
-// lado: se conecta cuando se implemente el bucle de combate real).
+// Borra el archivo de partida guardada. Se usa en el modo dificil
+// cuando el equipo pierde un combate.
 void eliminarPartida(void);
 
 // Agrega una linea al archivo de log del juego (eventos importantes).
