@@ -264,6 +264,8 @@ void pausar(void) {
     putchar('\n');
 }
 
+#ifdef _WIN32
+// Menu con flechas: solo existe en la consola de Windows.
 static void mostrarOpcionesMenu(const char *opciones_ptr[], int cantidadOpciones, int seleccionado) {
     for (int i = 0; i < cantidadOpciones; i++) {
         if (i == seleccionado) {
@@ -278,6 +280,7 @@ static void mostrarOpcionesMenu(const char *opciones_ptr[], int cantidadOpciones
     printf("Flechas para elegir, Enter para confirmar: ");
     fflush(stdout);
 }
+#endif
 
 static int leerOpcionNumerica(int cantidadOpciones) {
     int opcion;
