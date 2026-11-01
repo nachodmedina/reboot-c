@@ -1,11 +1,24 @@
+#define _POSIX_C_SOURCE 200809L   // dup, dup2, fileno (para silenciar la simulacion)
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifdef _WIN32
+#include <io.h>
+#define dup _dup
+#define dup2 _dup2
+#define close _close
+#define RUTA_NULA "NUL"
+#else
+#include <unistd.h>
+#define RUTA_NULA "/dev/null"
+#endif
 #include "../include/archivos.h"
 #include "../include/combate.h"
 #include "../include/items.h"
+#include "../include/progresion.h"
+#include "../include/zonas.h"
 
 static Personaje_t crearIsaac(void) {
     return crearPersonaje("Isaac", "Espada", HABILIDAD_CRITICO_GRUPAL, 320, 40, 80);
@@ -405,9 +418,9 @@ static void testSefirotCuraEInvoca(void) {
 }
 
 // ============================================================
-// Simulacion de Zona 1 (sin teclado)
+// Simulacion (sin teclado)
 // Peor caso de la doc: sin habilidad ni items; 1 a 1, y area
-// solo con 3 o mas enemigos vivos. Protagonista solo.
+// solo con 3 o mas enemigos vivos.
 // ============================================================
 
 static int primerEnemigoVivo(const Batalla_t *batalla_ptr) {
@@ -451,42 +464,123 @@ static int combateAutomatico(Personaje_t equipo_ptr[], int cantP, Batalla_t *bat
     }
 }
 
-static void informarFase(const char *fase_ptr, int gano, const Personaje_t *protagonista_ptr) {
-    printf("\n>>> %s: %s - vida %d/%d (%d%%)\n\n", fase_ptr, gano ? "GANA" : "PIERDE",
-           protagonista_ptr->vida, protagonista_ptr->vidaMax,
-           protagonista_ptr->vida * 100 / protagonista_ptr->vidaMax);
+// Mientras corre la campana, los mensajes del combate van a la "nada" para
+// que solo se vea el resumen final.
+static int silenciarSalida(void) {
+    fflush(stdout);
+    int copia = dup(fileno(stdout));
+    if (freopen(RUTA_NULA, "w", stdout) == NULL) {
+        return -1;
+    }
+    return copia;
 }
 
-static void simularZona1(void) {
-    Personaje_t equipo[1] = { crearIsaac() };
-    int gano;
+static void restaurarSalida(int copia) {
+    fflush(stdout);
+    if (copia >= 0) {
+        dup2(copia, fileno(stdout));
+        close(copia);
+    }
+}
 
-    Enemigo_t fase1[2] = { crearCentinela(), crearCentinela() };
-    Batalla_t batalla = batallaCon(fase1, 2);
-    gano = combateAutomatico(equipo, 1, &batalla);
-    informarFase("Fase 1 (2 Centinela)", gano, &equipo[0]);
-    if (!gano) return;
+static int vidaPorcentajeEquipo(const Personaje_t equipo_ptr[], int cant) {
+    int vida = 0;
+    int vidaMax = 0;
+    for (int i = 0; i < cant; i++) {
+        vida += equipo_ptr[i].vida;
+        vidaMax += equipo_ptr[i].vidaMax;
+    }
+    return vida * 100 / vidaMax;
+}
 
-    Enemigo_t fase2[1] = { crearCazador() };
-    batalla = batallaCon(fase2, 1);
-    gano = combateAutomatico(equipo, 1, &batalla);
-    informarFase("Fase 2 (1 Cazador)", gano, &equipo[0]);
-    if (!gano) return;
+static void recuperarEquipoSimulado(Personaje_t equipo_ptr[], int cant) {
+    for (int i = 0; i < cant; i++) {
+        equipo_ptr[i].vida = equipo_ptr[i].vidaMax;
+        equipo_ptr[i].estadoActivo.tipo = ESTADO_NINGUNO;
+    }
+}
 
-    Enemigo_t fase3[3] = { crearCazador(), crearCentinela(), crearCentinela() };
-    batalla = batallaCon(fase3, 3);
-    gano = combateAutomatico(equipo, 1, &batalla);
-    informarFase("Fase 3 (1 Cazador + 2 Centinela)", gano, &equipo[0]);
-    if (!gano) return;
+// Juega las 4 zonas como el juego real (descanso al empezar cada zona,
+// fogatas, aliados, mejoras y contrabonus), sin eventos entre fases. Guarda
+// la vida del equipo al terminar cada zona y devuelve cuantas zonas supero.
+static int simularCampana(int protagonista, TipoMejora estrategia, int vidaAlTerminar_ptr[]) {
+    Personaje_t todos[3] = { crearIsaac(), crearDante(), crearFrieren() };
+    Personaje_t equipo[3] = {
+        todos[protagonista],
+        todos[aliadoQueSeUne(protagonista, 1)],
+        todos[aliadoQueSeUne(protagonista, 2)]
+    };
+    int cant = 1;
+    ProgresoPartida_t progreso = crearProgresoPartida();
 
-    equipo[0].vida = equipo[0].vidaMax;
-    equipo[0].estadoActivo.tipo = ESTADO_NINGUNO;
-    printf(">>> Fogata: vida al 100%%\n");
+    for (int numero = 1; numero <= CANT_ZONAS; numero++) {
+        Zona_t zona = crearZonaPorNumero(numero);
+        recuperarEquipoSimulado(equipo, cant);
+        for (int f = 0; f < zona.cantFases; f++) {
+            if (zona.fases[f].fogataAntes) {
+                recuperarEquipoSimulado(equipo, cant);
+            }
+            Batalla_t batalla = zona.fases[f].batalla;
+            aplicarContrabonusEnemigos(batalla.enemigos, batalla.cantEnemigos, &progreso);
+            aplicarContrabonusEnemigos(batalla.refuerzos, batalla.cantRefuerzos, &progreso);
+            if (!combateAutomatico(equipo, cant, &batalla)) {
+                return numero - 1;
+            }
+        }
+        vidaAlTerminar_ptr[numero - 1] = vidaPorcentajeEquipo(equipo, cant);
 
-    Enemigo_t fase4[2] = { crearCazador(), crearSpectre() };
-    batalla = batallaCon(fase4, 2);
-    gano = combateAutomatico(equipo, 1, &batalla);
-    informarFase("Fase 4 (Cazador + Spectre)", gano, &equipo[0]);
+        if (numero < CANT_ZONAS) {
+            int desbloqueados[3] = { cant > 0, cant > 1, cant > 2 };
+            aplicarMejoraEquipo(equipo, desbloqueados, 3, estrategia, &progreso);
+            if (cant < 3) {
+                aplicarMejorasAcumuladas(&equipo[cant], &progreso);
+                cant++;
+            }
+        }
+    }
+    return CANT_ZONAS;
+}
+
+// Corre la campana con varias semillas para cada estrategia de mejora e
+// imprime, por zona, cuantas veces se gano (de las que se llego) y la vida
+// media del equipo al terminarla.
+static void simularBalance(unsigned int semillaBase, int corridas) {
+    const char *nombresEstrategia_ptr[] = { "siempre vida", "siempre ataque", "siempre defensa" };
+    printf("\n===== Balance: campana completa, peor caso (semillas %u a %u) =====\n",
+           semillaBase, semillaBase + (unsigned int) corridas - 1);
+
+    for (int e = 0; e < 3; e++) {
+        TipoMejora estrategia = (TipoMejora) (MEJORA_VIDA + e);
+        int llegaron[CANT_ZONAS] = { 0 };
+        int ganaron[CANT_ZONAS] = { 0 };
+        int vidaSumada[CANT_ZONAS] = { 0 };
+
+        for (int c = 0; c < corridas; c++) {
+            srand(semillaBase + (unsigned int) c);
+            int vidaAlTerminar[CANT_ZONAS];
+            int copia = silenciarSalida();
+            int superadas = simularCampana(c % 3, estrategia, vidaAlTerminar);
+            restaurarSalida(copia);
+
+            for (int z = 0; z < CANT_ZONAS && z <= superadas; z++) {
+                llegaron[z]++;
+                if (z < superadas) {
+                    ganaron[z]++;
+                    vidaSumada[z] += vidaAlTerminar[z];
+                }
+            }
+        }
+
+        printf("\nMejora %s:\n", nombresEstrategia_ptr[e]);
+        for (int z = 0; z < CANT_ZONAS; z++) {
+            printf("  Zona %d: gana %3d de %3d (%3d%%)", z + 1, ganaron[z], llegaron[z],
+                   llegaron[z] ? ganaron[z] * 100 / llegaron[z] : 0);
+            if (ganaron[z] > 0) {
+                printf(" - vida media al terminar %d%%", vidaSumada[z] / ganaron[z]);
+            }
+            printf("\n");
+        }
+    }
 }
 
 int main(int argc, char *argv_ptr[]) {
@@ -512,9 +606,7 @@ int main(int argc, char *argv_ptr[]) {
     testSefirotCuraEInvoca();
     printf("\n===== Todos los tests pasaron =====\n");
 
-    unsigned int semilla = argc > 1 ? (unsigned int) atoi(argv_ptr[1]) : 42;
-    srand(semilla);
-    printf("\n===== Simulacion Zona 1 (semilla %u) =====\n", semilla);
-    simularZona1();
+    unsigned int semillaBase = argc > 1 ? (unsigned int) atoi(argv_ptr[1]) : 1;
+    simularBalance(semillaBase, 50);
     return 0;
 }
