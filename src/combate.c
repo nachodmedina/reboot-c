@@ -50,11 +50,11 @@ int calcularDanoArea(int ataque, int defensa) {
     return calcularDano(ataque / 2 + AREA_BONUS, defensa);
 }
 
-int ataqueEfectivo(Personaje_t personaje) {
-    if (personaje.estadoActivo.tipo == ESTADO_DEBILITADO) {
-        return personaje.ataque * (100 - personaje.estadoActivo.magnitud) / 100;
+int ataqueEfectivo(const Personaje_t *personaje_ptr) {
+    if (personaje_ptr->estadoActivo.tipo == ESTADO_DEBILITADO) {
+        return personaje_ptr->ataque * (100 - personaje_ptr->estadoActivo.magnitud) / 100;
     }
-    return personaje.ataque;
+    return personaje_ptr->ataque;
 }
 
 // Aplica el critico grupal de Isaac si esta activo.
@@ -79,21 +79,21 @@ static void recibirDanoEnemigo(Enemigo_t *objetivo_ptr, int dano) {
     }
 }
 
-void ataqueIndividual(Personaje_t atacante, Enemigo_t *objetivo_ptr, EfectoGrupal_t efecto) {
-    int dano = calcularDano(ataqueEfectivo(atacante), objetivo_ptr->defensa);
+void ataqueIndividual(const Personaje_t *atacante_ptr, Enemigo_t *objetivo_ptr, EfectoGrupal_t efecto) {
+    int dano = calcularDano(ataqueEfectivo(atacante_ptr), objetivo_ptr->defensa);
     dano = aplicarCriticoGrupal(dano, efecto);
-    imprimirNombreCombate(COLOR_VERDE, atacante.nombre);
+    imprimirNombreCombate(COLOR_VERDE, atacante_ptr->nombre);
     printf(" ataca a ");
     imprimirNombreCombate(colorNombreEnemigo(objetivo_ptr), objetivo_ptr->nombre);
     printf(".%s\n", estiloTerminal(COLOR_RESET));
     recibirDanoEnemigo(objetivo_ptr, dano);
 }
 
-void ataqueArea(Personaje_t atacante, Enemigo_t enemigos_ptr[], int cantEnemigos, EfectoGrupal_t efecto) {
-    imprimirMensajeCombate(COLOR_VERDE, atacante.nombre, "lanza un ataque en area.");
+void ataqueArea(const Personaje_t *atacante_ptr, Enemigo_t enemigos_ptr[], int cantEnemigos, EfectoGrupal_t efecto) {
+    imprimirMensajeCombate(COLOR_VERDE, atacante_ptr->nombre, "lanza un ataque en area.");
     for (int i = 0; i < cantEnemigos; i++) {
         if (estaVivoEnemigo(&enemigos_ptr[i])) {
-            int dano = calcularDanoArea(ataqueEfectivo(atacante), enemigos_ptr[i].defensa);
+            int dano = calcularDanoArea(ataqueEfectivo(atacante_ptr), enemigos_ptr[i].defensa);
             dano = aplicarCriticoGrupal(dano, efecto);
             recibirDanoEnemigo(&enemigos_ptr[i], dano);
         }
@@ -114,27 +114,28 @@ void curarEquipo(Personaje_t equipo_ptr[], int cantPersonajes, int cantidad) {
     }
 }
 
-int activarHabilidad(Personaje_t usuario, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t *efecto_ptr) {
+int activarHabilidad(const Personaje_t *usuario_ptr, Personaje_t equipo_ptr[], int cantPersonajes,
+                     EfectoGrupal_t *efecto_ptr) {
     if (efecto_ptr->tipo != EFECTO_GRUPAL_INACTIVO) {
         return 0;
     }
 
-    switch (usuario.habilidadEspecial) {
+    switch (usuario_ptr->habilidadEspecial) {
         case HABILIDAD_CRITICO_GRUPAL:
             efecto_ptr->tipo = EFECTO_GRUPAL_CRITICO;
-            imprimirNombreCombate(COLOR_VERDE, usuario.nombre);
+            imprimirNombreCombate(COLOR_VERDE, usuario_ptr->nombre);
             printf(" activa Critico grupal: el equipo pega x1.2 por %d turnos.%s\n",
                    DURACION_HABILIDAD, estiloTerminal(COLOR_RESET));
             break;
         case HABILIDAD_DEFENSA_GRUPAL:
             efecto_ptr->tipo = EFECTO_GRUPAL_DEFENSA;
-            imprimirNombreCombate(COLOR_VERDE, usuario.nombre);
+            imprimirNombreCombate(COLOR_VERDE, usuario_ptr->nombre);
             printf(" activa Defensa grupal: el equipo recibe menos dano por %d turnos.%s\n",
                    DURACION_HABILIDAD, estiloTerminal(COLOR_RESET));
             break;
         case HABILIDAD_CURACION_GRUPAL:
             efecto_ptr->tipo = EFECTO_GRUPAL_CURACION;
-            imprimirMensajeCombate(COLOR_VERDE, usuario.nombre, "activa Curacion grupal.");
+            imprimirMensajeCombate(COLOR_VERDE, usuario_ptr->nombre, "activa Curacion grupal.");
             curarEquipo(equipo_ptr, cantPersonajes, CURACION_GRUPAL);
             break;
     }
@@ -152,7 +153,7 @@ void iniciarRonda(Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t e
 }
 
 // Elige al azar un personaje vivo. Devuelve su indice, o -1 si no queda ninguno.
-static int elegirObjetivoAleatorio(Personaje_t equipo_ptr[], int cantPersonajes) {
+static int elegirObjetivoAleatorio(const Personaje_t equipo_ptr[], int cantPersonajes) {
     int vivos = quedanPersonajesVivos(equipo_ptr, cantPersonajes);
     if (vivos == 0) {
         return -1;
@@ -169,43 +170,68 @@ static int elegirObjetivoAleatorio(Personaje_t equipo_ptr[], int cantPersonajes)
     return -1;
 }
 
-void turnoEnemigo(Enemigo_t atacante, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t efecto) {
+// Defensa del personaje teniendo en cuenta la defensa grupal de Dante.
+static int defensaEfectiva(const Personaje_t *personaje_ptr, EfectoGrupal_t efecto) {
+    if (efecto.tipo == EFECTO_GRUPAL_DEFENSA) {
+        return personaje_ptr->defensa * DEFENSA_GRUPAL_PORCENTAJE / 100;
+    }
+    return personaje_ptr->defensa;
+}
+
+static void recibirDanoPersonaje(Personaje_t *objetivo_ptr, int dano) {
+    objetivo_ptr->vida -= dano;
+    if (objetivo_ptr->vida < 0) {
+        objetivo_ptr->vida = 0;
+    }
+    imprimirNombreCombate(COLOR_VERDE, objetivo_ptr->nombre);
+    printf(" recibe %d de dano (vida %d/%d)%s\n", dano, objetivo_ptr->vida,
+           objetivo_ptr->vidaMax, estiloTerminal(COLOR_RESET));
+    if (!estaVivoPersonaje(objetivo_ptr)) {
+        imprimirMensajeCombate(COLOR_VERDE, objetivo_ptr->nombre, "cayo en combate.");
+    }
+}
+
+void turnoEnemigo(const Enemigo_t *atacante_ptr, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t efecto) {
     int indice = elegirObjetivoAleatorio(equipo_ptr, cantPersonajes);
     if (indice == -1) {
         return;
     }
+    Personaje_t *objetivo_ptr = &equipo_ptr[indice];
+    int dano = calcularDano(atacante_ptr->ataque, defensaEfectiva(objetivo_ptr, efecto));
 
-    int defensa = equipo_ptr[indice].defensa;
-    if (efecto.tipo == EFECTO_GRUPAL_DEFENSA) {
-        defensa = defensa * DEFENSA_GRUPAL_PORCENTAJE / 100;
-    }
-    int dano = calcularDano(atacante.ataque, defensa);
-
-    const char *color_ptr = esJefeEnemigo(&atacante) ? COLOR_AMARILLO : COLOR_ROJO;
-    imprimirNombreCombate(color_ptr, atacante.nombre);
+    imprimirNombreCombate(colorNombreEnemigo(atacante_ptr), atacante_ptr->nombre);
     printf(" ataca a ");
-    imprimirNombreCombate(COLOR_VERDE, equipo_ptr[indice].nombre);
+    imprimirNombreCombate(COLOR_VERDE, objetivo_ptr->nombre);
     printf(".%s\n", estiloTerminal(COLOR_RESET));
-    if (atacante.habilidad == HABILIDAD_ENEMIGO_CRITICO && numeroAleatorio(1, 100) <= CRITICO_ENEMIGO_CHANCE) {
+    if (atacante_ptr->habilidad == HABILIDAD_ENEMIGO_CRITICO && numeroAleatorio(1, 100) <= CRITICO_ENEMIGO_CHANCE) {
         dano = dano * CRITICO_ENEMIGO_PORCENTAJE / 100;
         printf("%s  Golpe critico!%s\n", estiloTerminal(COLOR_ROJO), estiloTerminal(COLOR_RESET));
     }
-
-    equipo_ptr[indice].vida -= dano;
-    if (equipo_ptr[indice].vida < 0) {
-        equipo_ptr[indice].vida = 0;
+    recibirDanoPersonaje(objetivo_ptr, dano);
+    if (!estaVivoPersonaje(objetivo_ptr)) {
+        return;
     }
-    imprimirNombreCombate(COLOR_VERDE, equipo_ptr[indice].nombre);
-    printf(" recibe %d de dano (vida %d/%d)%s\n", dano, equipo_ptr[indice].vida,
-           equipo_ptr[indice].vidaMax, estiloTerminal(COLOR_RESET));
 
-    if (!estaVivoPersonaje(&equipo_ptr[indice])) {
-        imprimirMensajeCombate(COLOR_VERDE, equipo_ptr[indice].nombre, "cayo en combate.");
-    } else if (atacante.habilidad == HABILIDAD_ENEMIGO_TRAMPA && numeroAleatorio(1, 100) <= TRAMPA_CHANCE) {
+    if (atacante_ptr->habilidad == HABILIDAD_ENEMIGO_TRAMPA && numeroAleatorio(1, 100) <= TRAMPA_CHANCE) {
         Estado_t debilitado = { ESTADO_DEBILITADO, DEBILITADO_DURACION, DEBILITADO_REDUCCION };
-        aplicarEstadoPersonaje(&equipo_ptr[indice], debilitado);
-        imprimirMensajeCombate(COLOR_VERDE, equipo_ptr[indice].nombre,
-                               "cae en una trampa: queda debilitado.");
+        aplicarEstadoPersonaje(objetivo_ptr, debilitado);
+        imprimirMensajeCombate(COLOR_VERDE, objetivo_ptr->nombre, "cae en una trampa: queda debilitado.");
+    }
+}
+
+void faseEnemigos(Batalla_t *batalla_ptr, Personaje_t equipo_ptr[], int cantPersonajes, EfectoGrupal_t efecto) {
+    for (int j = 0; j < batalla_ptr->cantEnemigos && quedanPersonajesVivos(equipo_ptr, cantPersonajes); j++) {
+        Enemigo_t *enemigo_ptr = &batalla_ptr->enemigos[j];
+        if (!estaVivoEnemigo(enemigo_ptr)) {
+            continue;
+        }
+        if (enemigo_ptr->estadoActivo.tipo == ESTADO_ATURDIDO) {
+            imprimirMensajeCombate(colorNombreEnemigo(enemigo_ptr), enemigo_ptr->nombre,
+                                   "esta aturdido y pierde el turno.");
+        } else {
+            turnoEnemigo(enemigo_ptr, equipo_ptr, cantPersonajes, efecto);
+        }
+        actualizarEstadoEnemigo(enemigo_ptr);
     }
 }
 
@@ -220,7 +246,7 @@ void cerrarRonda(EfectoGrupal_t *efecto_ptr) {
     }
 }
 
-int quedanPersonajesVivos(Personaje_t equipo_ptr[], int cantPersonajes) {
+int quedanPersonajesVivos(const Personaje_t equipo_ptr[], int cantPersonajes) {
     int vivos = 0;
     for (int i = 0; i < cantPersonajes; i++) {
         if (estaVivoPersonaje(&equipo_ptr[i])) {
@@ -230,7 +256,7 @@ int quedanPersonajesVivos(Personaje_t equipo_ptr[], int cantPersonajes) {
     return vivos;
 }
 
-int quedanEnemigosVivos(Enemigo_t enemigos_ptr[], int cantEnemigos) {
+int quedanEnemigosVivos(const Enemigo_t enemigos_ptr[], int cantEnemigos) {
     int vivos = 0;
     for (int i = 0; i < cantEnemigos; i++) {
         if (estaVivoEnemigo(&enemigos_ptr[i])) {
@@ -244,7 +270,8 @@ int quedanEnemigosVivos(Enemigo_t enemigos_ptr[], int cantEnemigos) {
 // Bucle interactivo
 // ============================================================
 
-static void mostrarEstadoCombate(Personaje_t equipo_ptr[], int cantPersonajes, Enemigo_t enemigos_ptr[], int cantEnemigos) {
+static void mostrarEstadoCombate(const Personaje_t equipo_ptr[], int cantPersonajes,
+                                 const Enemigo_t enemigos_ptr[], int cantEnemigos) {
     printf("\n%s--- Tu equipo ---%s\n", estiloTerminal(COLOR_VERDE), estiloTerminal(COLOR_RESET));
     for (int i = 0; i < cantPersonajes; i++) {
         if (estaVivoPersonaje(&equipo_ptr[i])) {
@@ -285,27 +312,13 @@ static int elegirEnemigo(Enemigo_t enemigos_ptr[], int cantEnemigos) {
     return indicesEnemigos[leerOpcionMenu(opcionesEnemigos_ptr, cantidadOpciones)];
 }
 
-static const char *nombreTipoItem(TipoItem tipo) {
-    switch (tipo) {
-        case ITEM_VIDA:    return "Pocion de vida";
-        case ITEM_VENENO:  return "Pocion de veneno";
-    }
-    return "?";
-}
-
 // Muestra el inventario y devuelve el indice del item elegido.
 static int elegirItem(const Inventario_t *inventario_ptr) {
     printf("Elegi un item:\n");
     char opcionesItems[MAX_SLOTS_INVENTARIO + 1][100];
     const char *opcionesItems_ptr[MAX_SLOTS_INVENTARIO + 1];
     for (int i = 0; i < inventario_ptr->cantidad; i++) {
-        if (inventario_ptr->items[i].tipo == ITEM_VENENO) {
-            snprintf(opcionesItems[i], sizeof(opcionesItems[i]), "%s (%d de dano por turno)",
-                   nombreTipoItem(inventario_ptr->items[i].tipo), inventario_ptr->items[i].valor);
-        } else {
-            snprintf(opcionesItems[i], sizeof(opcionesItems[i]), "%s (+%d de vida)",
-                   nombreTipoItem(inventario_ptr->items[i].tipo), inventario_ptr->items[i].valor);
-        }
+        describirItem(&inventario_ptr->items[i], opcionesItems[i], sizeof(opcionesItems[i]));
         opcionesItems_ptr[i] = opcionesItems[i];
     }
     opcionesItems_ptr[inventario_ptr->cantidad] = "Cancelar y volver al turno";
@@ -346,15 +359,15 @@ static void turnoPersonaje(Personaje_t equipo_ptr[], int cantPersonajes, int act
             case 0: {
                 int objetivo = elegirEnemigo(enemigos_ptr, cantEnemigos);
                 if (objetivo >= 0) {
-                    ataqueIndividual(equipo_ptr[actual], &enemigos_ptr[objetivo], *efecto_ptr);
+                    ataqueIndividual(&equipo_ptr[actual], &enemigos_ptr[objetivo], *efecto_ptr);
                 }
                 return;
             }
             case 1:
-                ataqueArea(equipo_ptr[actual], enemigos_ptr, cantEnemigos, *efecto_ptr);
+                ataqueArea(&equipo_ptr[actual], enemigos_ptr, cantEnemigos, *efecto_ptr);
                 return;
             case 2:
-                if (activarHabilidad(equipo_ptr[actual], equipo_ptr, cantPersonajes, efecto_ptr)) {
+                if (activarHabilidad(&equipo_ptr[actual], equipo_ptr, cantPersonajes, efecto_ptr)) {
                     return;
                 }
                 printf("La habilidad especial ya esta activa.\n");
@@ -395,7 +408,21 @@ static void turnoPersonaje(Personaje_t equipo_ptr[], int cantPersonajes, int act
     }
 }
 
-int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Enemigo_t enemigos_ptr[], int cantEnemigos, Inventario_t *inventario_ptr) {
+static int terminarCombate(int gano) {
+    if (gano) {
+        printf("\n%sVictoria! Todos los enemigos fueron derrotados.%s\n",
+               estiloTerminal(COLOR_VERDE), estiloTerminal(COLOR_RESET));
+        registrarLog("Combate ganado");
+    } else {
+        printf("\n%sDerrota. Tu equipo cayo en combate.%s\n",
+               estiloTerminal(COLOR_ROJO), estiloTerminal(COLOR_RESET));
+        registrarLog("Combate perdido");
+    }
+    pausar();
+    return gano;
+}
+
+int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Batalla_t *batalla_ptr, Inventario_t *inventario_ptr) {
     EfectoGrupal_t efecto = crearEfectoGrupal();
     int ronda = 1;
 
@@ -405,9 +432,9 @@ int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Enemigo_t enemi
                estiloTerminal(COLOR_AZUL_CLARO), estiloTerminal(ESTILO_NEGRITA),
                ronda, estiloTerminal(COLOR_RESET));
         iniciarRonda(equipo_ptr, cantPersonajes, efecto);
-        mostrarEstadoCombate(equipo_ptr, cantPersonajes, enemigos_ptr, cantEnemigos);
+        mostrarEstadoCombate(equipo_ptr, cantPersonajes, batalla_ptr->enemigos, batalla_ptr->cantEnemigos);
 
-        for (int i = 0; i < cantPersonajes && quedanEnemigosVivos(enemigos_ptr, cantEnemigos); i++) {
+        for (int i = 0; i < cantPersonajes && quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos); i++) {
             if (!estaVivoPersonaje(&equipo_ptr[i])) {
                 continue;
             }
@@ -415,48 +442,22 @@ int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Enemigo_t enemi
                 imprimirMensajeCombate(COLOR_VERDE, equipo_ptr[i].nombre,
                                        "esta aturdido y pierde el turno.");
             } else {
-                turnoPersonaje(equipo_ptr, cantPersonajes, i, enemigos_ptr, cantEnemigos, inventario_ptr, &efecto);
+                turnoPersonaje(equipo_ptr, cantPersonajes, i, batalla_ptr->enemigos, batalla_ptr->cantEnemigos,
+                               inventario_ptr, &efecto);
             }
             actualizarEstadoPersonaje(&equipo_ptr[i]);
         }
-
-        if (!quedanEnemigosVivos(enemigos_ptr, cantEnemigos)) {
-            printf("\n%sVictoria! Todos los enemigos fueron derrotados.%s\n",
-                   estiloTerminal(COLOR_VERDE), estiloTerminal(COLOR_RESET));
-            registrarLog("Combate ganado");
-            pausar();
-            return 1;
+        if (!quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos)) {
+            return terminarCombate(1);
         }
 
         printf("\n");
-        for (int j = 0; j < cantEnemigos; j++) {
-            if (!estaVivoEnemigo(&enemigos_ptr[j])) {
-                continue;
-            }
-            if (enemigos_ptr[j].estadoActivo.tipo == ESTADO_ATURDIDO) {
-                imprimirMensajeCombate(colorNombreEnemigo(&enemigos_ptr[j]),
-                                       enemigos_ptr[j].nombre,
-                                       "esta aturdido y pierde el turno.");
-            } else {
-                turnoEnemigo(enemigos_ptr[j], equipo_ptr, cantPersonajes, efecto);
-            }
-            actualizarEstadoEnemigo(&enemigos_ptr[j]);
-        }
-
+        faseEnemigos(batalla_ptr, equipo_ptr, cantPersonajes, efecto);
         if (!quedanPersonajesVivos(equipo_ptr, cantPersonajes)) {
-            printf("\n%sDerrota. Tu equipo cayo en combate.%s\n",
-                   estiloTerminal(COLOR_ROJO), estiloTerminal(COLOR_RESET));
-            registrarLog("Combate perdido");
-            pausar();
-            return 0;
+            return terminarCombate(0);
         }
-
-        if (!quedanEnemigosVivos(enemigos_ptr, cantEnemigos)) {
-            printf("\n%sVictoria! Todos los enemigos fueron derrotados.%s\n",
-                   estiloTerminal(COLOR_VERDE), estiloTerminal(COLOR_RESET));
-            registrarLog("Combate ganado");
-            pausar();
-            return 1;
+        if (!quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos)) {
+            return terminarCombate(1);   // el ultimo enemigo murio por veneno
         }
 
         cerrarRonda(&efecto);

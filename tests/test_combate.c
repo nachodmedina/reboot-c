@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "../include/archivos.h"
 #include "../include/combate.h"
 #include "../include/items.h"
-#include "../include/archivos.h"
 
 static Personaje_t crearIsaac(void) {
     return crearPersonaje("Isaac", "Espada", HABILIDAD_CRITICO_GRUPAL, 320, 40, 80);
@@ -28,7 +28,7 @@ static Enemigo_t crearCazador(void) {
 }
 
 static Enemigo_t crearSpectre(void) {
-    return crearEnemigo("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
+    return crearJefe("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
 }
 
 // ============================================================
@@ -41,7 +41,7 @@ static void testCalcularDano(void) {
     assert(calcularDano(30, 80) == 0);
 }
 
-static void testIdentificarJefePorNombre(void) {
+static void testIdentificarJefe(void) {
     Enemigo_t jefe = crearSpectre();
     Enemigo_t enemigo = crearCentinela();
 
@@ -60,17 +60,17 @@ static void testAtaqueIndividualYCritico(void) {
     EfectoGrupal_t efecto = crearEfectoGrupal();
 
     Enemigo_t normal = crearCentinela();
-    ataqueIndividual(isaac, &normal, efecto);
+    ataqueIndividual(&isaac, &normal, efecto);
     assert(normal.vida == 120 - 72);
 
     efecto.tipo = EFECTO_GRUPAL_CRITICO;
     Enemigo_t conCritico = crearCentinela();
-    ataqueIndividual(isaac, &conCritico, efecto);
+    ataqueIndividual(&isaac, &conCritico, efecto);
     assert(conCritico.vida == 120 - 86);     // 72 * 1.2
 
     Enemigo_t casiMuerto = crearCentinela();
     casiMuerto.vida = 10;
-    ataqueIndividual(isaac, &casiMuerto, crearEfectoGrupal());
+    ataqueIndividual(&isaac, &casiMuerto, crearEfectoGrupal());
     assert(casiMuerto.vida == 0);            // nunca queda negativa
 }
 
@@ -79,7 +79,7 @@ static void testAtaqueAreaIgnoraMuertos(void) {
     Enemigo_t enemigos[3] = { crearCentinela(), crearCentinela(), crearCentinela() };
     enemigos[1].vida = 0;
 
-    ataqueArea(isaac, enemigos, 3, crearEfectoGrupal());
+    ataqueArea(&isaac, enemigos, 3, crearEfectoGrupal());
     assert(enemigos[0].vida == 120 - 47);
     assert(enemigos[1].vida == 0);
     assert(enemigos[2].vida == 120 - 47);
@@ -87,23 +87,24 @@ static void testAtaqueAreaIgnoraMuertos(void) {
 
 static void testDebilitado(void) {
     Personaje_t isaac = crearIsaac();
-    assert(ataqueEfectivo(isaac) == 80);
+    assert(ataqueEfectivo(&isaac) == 80);
 
     Estado_t debilitado = { ESTADO_DEBILITADO, 1, 25 };
     aplicarEstadoPersonaje(&isaac, debilitado);
-    assert(ataqueEfectivo(isaac) == 60);
+    assert(ataqueEfectivo(&isaac) == 60);
 
     actualizarEstadoPersonaje(&isaac);       // dura 1 turno
     assert(isaac.estadoActivo.tipo == ESTADO_NINGUNO);
-    assert(ataqueEfectivo(isaac) == 80);
+    assert(ataqueEfectivo(&isaac) == 80);
 }
 
 // La trampa es aleatoria: en 100 golpes tiene que activarse algunas veces, pero no siempre.
 static void testTrampaDebilitaAVeces(void) {
     int debilitados = 0;
+    Enemigo_t cazador = crearCazador();
     for (int i = 0; i < 100; i++) {
         Personaje_t equipo[1] = { crearIsaac() };
-        turnoEnemigo(crearCazador(), equipo, 1, crearEfectoGrupal());
+        turnoEnemigo(&cazador, equipo, 1, crearEfectoGrupal());
         assert(equipo[0].vida == 320 - 16);
         if (equipo[0].estadoActivo.tipo == ESTADO_DEBILITADO) {
             debilitados++;
@@ -116,7 +117,8 @@ static void testTrampaDebilitaAVeces(void) {
 static void testEnemigoNoAtacaAMuertos(void) {
     Personaje_t equipo[2] = { crearIsaac(), crearDante() };
     equipo[0].vida = 0;
-    turnoEnemigo(crearCentinela(), equipo, 2, crearEfectoGrupal());
+    Enemigo_t centinela = crearCentinela();
+    turnoEnemigo(&centinela, equipo, 2, crearEfectoGrupal());
     assert(equipo[0].vida == 0);
     assert(equipo[1].vida == 320 - 8);
 }
@@ -125,13 +127,13 @@ static void testDefensaGrupal(void) {
     Enemigo_t golpeador = crearEnemigo("Golpeador", HABILIDAD_ENEMIGO_NINGUNA, 100, 0, 64);
 
     Personaje_t sinDefensa[1] = { crearDante() };
-    turnoEnemigo(golpeador, sinDefensa, 1, crearEfectoGrupal());
+    turnoEnemigo(&golpeador, sinDefensa, 1, crearEfectoGrupal());
     assert(sinDefensa[0].vida == 320 - 24);  // 64 - 40
 
     Personaje_t conDefensa[1] = { crearDante() };
     EfectoGrupal_t efecto = crearEfectoGrupal();
-    assert(activarHabilidad(conDefensa[0], conDefensa, 1, &efecto) == 1);
-    turnoEnemigo(golpeador, conDefensa, 1, efecto);
+    assert(activarHabilidad(&conDefensa[0], conDefensa, 1, &efecto) == 1);
+    turnoEnemigo(&golpeador, conDefensa, 1, efecto);
     assert(conDefensa[0].vida == 320 - 4);   // 64 - 60
 }
 
@@ -142,7 +144,7 @@ static void testCuracionGrupalDosVeces(void) {
     equipo[2].vida = 0;                      // muerto: no se cura
 
     EfectoGrupal_t efecto = crearEfectoGrupal();
-    assert(activarHabilidad(equipo[0], equipo, 3, &efecto) == 1);
+    assert(activarHabilidad(&equipo[0], equipo, 3, &efecto) == 1);
     assert(equipo[0].vida == 140);           // 1a curacion, al activarla
     assert(equipo[1].vida == 320);           // no pasa de vidaMax
     assert(equipo[2].vida == 0);
@@ -161,18 +163,18 @@ static void testHabilidadSePuedeReactivarTrasExpirar(void) {
     Personaje_t equipo[1] = { crearIsaac() };
     EfectoGrupal_t efecto = crearEfectoGrupal();
     assert(efecto.tipo == EFECTO_GRUPAL_INACTIVO);
-    assert(activarHabilidad(equipo[0], equipo, 1, &efecto) == 1);
+    assert(activarHabilidad(&equipo[0], equipo, 1, &efecto) == 1);
     assert(efecto.tipo == EFECTO_GRUPAL_CRITICO);
     assert(efecto.turnosRestantes == 2);
-    assert(activarHabilidad(equipo[0], equipo, 1, &efecto) == 0);
+    assert(activarHabilidad(&equipo[0], equipo, 1, &efecto) == 0);
 
     cerrarRonda(&efecto);
     assert(efecto.tipo == EFECTO_GRUPAL_CRITICO);  // sigue en la 2a ronda
-    assert(activarHabilidad(equipo[0], equipo, 1, &efecto) == 0);
+    assert(activarHabilidad(&equipo[0], equipo, 1, &efecto) == 0);
     cerrarRonda(&efecto);
     assert(efecto.tipo == EFECTO_GRUPAL_INACTIVO);
     assert(efecto.turnosRestantes == 0);
-    assert(activarHabilidad(equipo[0], equipo, 1, &efecto) == 1);
+    assert(activarHabilidad(&equipo[0], equipo, 1, &efecto) == 1);
     assert(efecto.tipo == EFECTO_GRUPAL_CRITICO);
     assert(efecto.turnosRestantes == 2);
 }
@@ -297,15 +299,24 @@ static void testGuardarYRecuperarInventarioCompartido(void) {
     assert(remove(ruta) == 0);
 }
 
+static Batalla_t batallaCon(const Enemigo_t enemigos_ptr[], int cantEnemigos) {
+    Batalla_t batalla;
+    for (int i = 0; i < cantEnemigos; i++) {
+        batalla.enemigos[i] = enemigos_ptr[i];
+    }
+    batalla.cantEnemigos = cantEnemigos;
+    return batalla;
+}
+
 // ============================================================
 // Simulacion de Zona 1 (sin teclado)
 // Peor caso de la doc: sin habilidad ni items; 1 a 1, y area
 // solo con 3 o mas enemigos vivos. Protagonista solo.
 // ============================================================
 
-static int primerEnemigoVivo(Enemigo_t enemigos_ptr[], int cant) {
-    for (int i = 0; i < cant; i++) {
-        if (estaVivoEnemigo(&enemigos_ptr[i])) {
+static int primerEnemigoVivo(const Batalla_t *batalla_ptr) {
+    for (int i = 0; i < batalla_ptr->cantEnemigos; i++) {
+        if (estaVivoEnemigo(&batalla_ptr->enemigos[i])) {
             return i;
         }
     }
@@ -313,40 +324,39 @@ static int primerEnemigoVivo(Enemigo_t enemigos_ptr[], int cant) {
 }
 
 // Igual que iniciarCombate, pero el jugador decide solo. Devuelve 1 si gana.
-static int combateAutomatico(Personaje_t equipo_ptr[], int cantP, Enemigo_t enemigos_ptr[], int cantE) {
+static int combateAutomatico(Personaje_t equipo_ptr[], int cantP, Batalla_t *batalla_ptr) {
     EfectoGrupal_t efecto = crearEfectoGrupal();
     while (1) {
         iniciarRonda(equipo_ptr, cantP, efecto);
-        for (int i = 0; i < cantP && quedanEnemigosVivos(enemigos_ptr, cantE); i++) {
+        for (int i = 0; i < cantP && quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos); i++) {
             if (!estaVivoPersonaje(&equipo_ptr[i])) {
                 continue;
             }
-            if (quedanEnemigosVivos(enemigos_ptr, cantE) >= 3) {
-                ataqueArea(equipo_ptr[i], enemigos_ptr, cantE, efecto);
+            if (quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos) >= 3) {
+                ataqueArea(&equipo_ptr[i], batalla_ptr->enemigos, batalla_ptr->cantEnemigos, efecto);
             } else {
-                ataqueIndividual(equipo_ptr[i], &enemigos_ptr[primerEnemigoVivo(enemigos_ptr, cantE)], efecto);
+                ataqueIndividual(&equipo_ptr[i], &batalla_ptr->enemigos[primerEnemigoVivo(batalla_ptr)], efecto);
             }
             actualizarEstadoPersonaje(&equipo_ptr[i]);
         }
-        if (!quedanEnemigosVivos(enemigos_ptr, cantE)) {
+        if (!quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos)) {
             return 1;
         }
-        for (int j = 0; j < cantE; j++) {
-            if (estaVivoEnemigo(&enemigos_ptr[j])) {
-                turnoEnemigo(enemigos_ptr[j], equipo_ptr, cantP, efecto);
-                actualizarEstadoEnemigo(&enemigos_ptr[j]);
-            }
-        }
+        faseEnemigos(batalla_ptr, equipo_ptr, cantP, efecto);
         if (!quedanPersonajesVivos(equipo_ptr, cantP)) {
             return 0;
+        }
+        if (!quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos)) {
+            return 1;
         }
         cerrarRonda(&efecto);
     }
 }
 
-static void informarFase(const char *fase_ptr, int gano, Personaje_t protagonista) {
+static void informarFase(const char *fase_ptr, int gano, const Personaje_t *protagonista_ptr) {
     printf("\n>>> %s: %s - vida %d/%d (%d%%)\n\n", fase_ptr, gano ? "GANA" : "PIERDE",
-           protagonista.vida, protagonista.vidaMax, protagonista.vida * 100 / protagonista.vidaMax);
+           protagonista_ptr->vida, protagonista_ptr->vidaMax,
+           protagonista_ptr->vida * 100 / protagonista_ptr->vidaMax);
 }
 
 static void simularZona1(void) {
@@ -354,18 +364,21 @@ static void simularZona1(void) {
     int gano;
 
     Enemigo_t fase1[2] = { crearCentinela(), crearCentinela() };
-    gano = combateAutomatico(equipo, 1, fase1, 2);
-    informarFase("Fase 1 (2 Centinela)", gano, equipo[0]);
+    Batalla_t batalla = batallaCon(fase1, 2);
+    gano = combateAutomatico(equipo, 1, &batalla);
+    informarFase("Fase 1 (2 Centinela)", gano, &equipo[0]);
     if (!gano) return;
 
     Enemigo_t fase2[1] = { crearCazador() };
-    gano = combateAutomatico(equipo, 1, fase2, 1);
-    informarFase("Fase 2 (1 Cazador)", gano, equipo[0]);
+    batalla = batallaCon(fase2, 1);
+    gano = combateAutomatico(equipo, 1, &batalla);
+    informarFase("Fase 2 (1 Cazador)", gano, &equipo[0]);
     if (!gano) return;
 
     Enemigo_t fase3[3] = { crearCazador(), crearCentinela(), crearCentinela() };
-    gano = combateAutomatico(equipo, 1, fase3, 3);
-    informarFase("Fase 3 (1 Cazador + 2 Centinela)", gano, equipo[0]);
+    batalla = batallaCon(fase3, 3);
+    gano = combateAutomatico(equipo, 1, &batalla);
+    informarFase("Fase 3 (1 Cazador + 2 Centinela)", gano, &equipo[0]);
     if (!gano) return;
 
     equipo[0].vida = equipo[0].vidaMax;
@@ -373,13 +386,14 @@ static void simularZona1(void) {
     printf(">>> Fogata: vida al 100%%\n");
 
     Enemigo_t fase4[2] = { crearCazador(), crearSpectre() };
-    gano = combateAutomatico(equipo, 1, fase4, 2);
-    informarFase("Fase 4 (Cazador + Spectre)", gano, equipo[0]);
+    batalla = batallaCon(fase4, 2);
+    gano = combateAutomatico(equipo, 1, &batalla);
+    informarFase("Fase 4 (Cazador + Spectre)", gano, &equipo[0]);
 }
 
 int main(int argc, char *argv_ptr[]) {
     testCalcularDano();
-    testIdentificarJefePorNombre();
+    testIdentificarJefe();
     testDanoArea();
     testAtaqueIndividualYCritico();
     testAtaqueAreaIgnoraMuertos();

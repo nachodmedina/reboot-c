@@ -12,6 +12,7 @@ typedef enum {
 typedef struct {
     char nombre[30];
     TipoHabilidadEnemigo habilidad;
+    int esJefe;             // 1 si es el jefe de la zona (se muestra en amarillo)
     int vida;
     int vidaMax;
     int defensa;
@@ -19,10 +20,13 @@ typedef struct {
     Estado_t estadoActivo;
 } Enemigo_t;
 
-// Crea un enemigo con sus stats iniciales (definidos segun la zona).
+// Crea un enemigo comun con sus stats iniciales (definidos segun la zona).
 Enemigo_t crearEnemigo(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque);
 
-// Indica si el enemigo actual es un jefe.
+// Igual que crearEnemigo, pero marcado como jefe.
+Enemigo_t crearJefe(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque);
+
+// Indica si el enemigo es un jefe.
 int esJefeEnemigo(const Enemigo_t *enemigo_ptr);
 
 // Muestra por consola los datos actuales del enemigo.

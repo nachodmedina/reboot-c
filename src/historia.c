@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 #include "../include/arte_ascii.h"
 #include "../include/historia.h"
 #include "../include/utils.h"
@@ -9,63 +8,6 @@ static void agregarRecompensa(Inventario_t *inventario_ptr, TipoItem tipo, int v
     if (!agregarItem(inventario_ptr, item)) {
         printf("La bolsa esta llena; no puedes guardar ese consumible.\n");
     }
-}
-
-Zona_t crearZona(const char *nombre_ptr, const char *descripcion_ptr) {
-    Zona_t zona;
-    strncpy(zona.nombre, nombre_ptr, sizeof(zona.nombre) - 1);
-    zona.nombre[sizeof(zona.nombre) - 1] = '\0';
-    strncpy(zona.descripcion, descripcion_ptr, sizeof(zona.descripcion) - 1);
-    zona.descripcion[sizeof(zona.descripcion) - 1] = '\0';
-    zona.cantFases = 0;
-    return zona;
-}
-
-int agregarFase(Zona_t *zona_ptr, const char *amenaza_ptr, const Enemigo_t enemigos_ptr[], int cantEnemigos, int fogataAntes) {
-    if (zona_ptr->cantFases >= MAX_FASES_ZONA || cantEnemigos > MAX_ENEMIGOS_FASE) {
-        return 0;
-    }
-    Fase_t *fase_ptr = &zona_ptr->fases[zona_ptr->cantFases];
-    strncpy(fase_ptr->amenaza, amenaza_ptr, sizeof(fase_ptr->amenaza) - 1);
-    fase_ptr->amenaza[sizeof(fase_ptr->amenaza) - 1] = '\0';
-    for (int i = 0; i < cantEnemigos; i++) {
-        fase_ptr->enemigos[i] = enemigos_ptr[i];
-    }
-    fase_ptr->cantEnemigos = cantEnemigos;
-    fase_ptr->fogataAntes = fogataAntes;
-    zona_ptr->cantFases++;
-    return 1;
-}
-
-Zona_t crearZonaCampoCeniza(void) {
-    Zona_t zona = crearZona(
-        "Campo Ceniza",
-        "Lo que fue un pueblo agricola es hoy tierra quemada, vigilada por\n"
-        "cazadores al servicio de las maquinas y sus perros mecanicos."
-    );
-
-    Enemigo_t centinela = crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
-    Enemigo_t cazador = crearEnemigo("Cazador de Campo Ceniza", HABILIDAD_ENEMIGO_TRAMPA, 160, 16, 56);
-    Enemigo_t spectre = crearEnemigo("Spectre", HABILIDAD_ENEMIGO_CRITICO, 280, 40, 60);
-
-    Enemigo_t fase1[] = { centinela, centinela };
-    agregarFase(&zona, "dos perros mecanicos emergen entre la ceniza y corren directo hacia vos.",
-                fase1, 2, 0);
-
-    Enemigo_t fase2[] = { cazador };
-    agregarFase(&zona, "un cazador sale de entre los restos de un granero y te apunta.",
-                fase2, 1, 0);
-
-    Enemigo_t fase3[] = { cazador, centinela, centinela };
-    agregarFase(&zona, "otro cazador aparece, esta vez acompañado por sus perros.",
-                fase3, 3, 0);
-
-    // Fase del jefe: antes se descansa en una fogata.
-    Enemigo_t fase4[] = { cazador, spectre };
-    agregarFase(&zona, "una figura enorme avanza detras de un cazador: es Spectre.",
-                fase4, 2, 1);
-
-    return zona;
 }
 
 // Bloques 1 y 2: contexto del mundo y el ataque a Raiz.
@@ -228,21 +170,19 @@ void mostrarEntradaZona(const Zona_t *zona_ptr) {
     pausar();
 }
 
-
-
 // Escena corta de transicion justo antes de un combate.
-void mostrarEncuentroEnemigos(const Personaje_t *personaje_ptr, const char *amenaza_ptr) {
+void mostrarEncuentroEnemigos(const Personaje_t *personaje_ptr, const char *recorrido_ptr,
+                              const char *amenaza_ptr) {
     char textoNarrativa[600];
     snprintf(textoNarrativa, sizeof(textoNarrativa),
-        "Mientras %s avanza entre las ruinas del pueblo, un sonido metalico y "
+        "Mientras %s avanza %s, un sonido metalico y "
         "extraño rompe el silencio. No hay tiempo para pensar: %s",
-        personaje_ptr->nombre, amenaza_ptr);
+        personaje_ptr->nombre, recorrido_ptr, amenaza_ptr);
     mostrarTextoEnCaja(NULL, textoNarrativa, COLOR_BLANCO);
     pausar();
 }
 
-
-void mostrarPostBatalla (const Personaje_t *personaje_ptr) {
+void mostrarPostBatalla(const Personaje_t *personaje_ptr) {
     char textoNarrativa[300];
     snprintf(textoNarrativa, sizeof(textoNarrativa),
         "Luego de la batalla, %s toma un descanso y sigue avanzando, sabiendo "
@@ -259,15 +199,15 @@ void mostrarHallazgoMejora(void) {
     pausar();
 }
 
-void mostrarReaccionSephirot(const char *atributoEnemigo_ptr, int aumentoAcumulado) {
+void mostrarReaccionSefirot(const char *atributoEnemigo_ptr, int aumentoAcumulado) {
     char textoNarrativa[500];
     snprintf(textoNarrativa, sizeof(textoNarrativa),
         "La baliza emite un pulso que se extiende por todo el campo de batalla.\n"
-        "Muy lejos de alli, Sephirot observa una lectura de energia desconocida.\n"
+        "Muy lejos de alli, Sefirot observa una lectura de energia desconocida.\n"
         "\"Reconozco esa mejora. Si ellos se fortalecen, mis maquinas tambien.\"\n"
         "Los enemigos de las proximas zonas ganaran %d puntos de %s acumulados.",
         aumentoAcumulado, atributoEnemigo_ptr);
-    mostrarTextoEnCaja("SEPHIROT", textoNarrativa, COLOR_BLANCO);
+    mostrarTextoEnCaja("SEFIROT", textoNarrativa, COLOR_BLANCO);
     pausar();
 }
 

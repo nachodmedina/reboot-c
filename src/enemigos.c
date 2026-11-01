@@ -8,6 +8,7 @@ Enemigo_t crearEnemigo(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, i
     strncpy(enemigo.nombre, nombre_ptr, sizeof(enemigo.nombre) - 1);
     enemigo.nombre[sizeof(enemigo.nombre) - 1] = '\0';
     enemigo.habilidad = habilidad;
+    enemigo.esJefe = 0;
     enemigo.vida = vidaMax;
     enemigo.vidaMax = vidaMax;
     enemigo.defensa = defensa;
@@ -18,8 +19,14 @@ Enemigo_t crearEnemigo(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, i
     return enemigo;
 }
 
+Enemigo_t crearJefe(const char *nombre_ptr, TipoHabilidadEnemigo habilidad, int vidaMax, int defensa, int ataque) {
+    Enemigo_t jefe = crearEnemigo(nombre_ptr, habilidad, vidaMax, defensa, ataque);
+    jefe.esJefe = 1;
+    return jefe;
+}
+
 int esJefeEnemigo(const Enemigo_t *enemigo_ptr) {
-    return enemigo_ptr != NULL && strcmp(enemigo_ptr->nombre, "Spectre") == 0;
+    return enemigo_ptr != NULL && enemigo_ptr->esJefe;
 }
 
 void mostrarEnemigo(const Enemigo_t *enemigo_ptr) {
