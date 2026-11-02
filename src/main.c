@@ -23,7 +23,7 @@ int main(void) {
                 jugarPartidaNueva();
                 break;
             case 1:
-                mostrarPartidaGuardada();
+                continuarPartidaGuardada();
                 break;
             case 2:
                 printf("\nHasta la proxima.\n");

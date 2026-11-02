@@ -132,6 +132,29 @@ static void descansarEnFogata(Personaje_t luchadores_ptr[], int cantLuchadores) 
     pausar();
 }
 
+// Guarda el punto de la historia para retomar desde esta fase. Pisa la partida anterior.
+static void guardarProgreso(const Partida_t *partida_ptr, int numeroZona, int fase) {
+    int desbloqueados[CANT_PERSONAJES];
+    marcarDesbloqueados(partida_ptr, desbloqueados);
+    EstadoPartida_t estado = { partida_ptr->modo, numeroZona, fase };
+    if (guardarPartida(ARCHIVO_PARTIDA, &estado, partida_ptr->equipo, CANT_PERSONAJES, desbloqueados,
+                       &partida_ptr->inventario, &partida_ptr->progreso, &partida_ptr->estadisticas)) {
+        printf("\nProgreso guardado.\n");
+    }
+}
+
+// Despues de descansar en una fogata el jugador decide si guarda.
+static void ofrecerGuardado(const Partida_t *partida_ptr, int numeroZona, int fase) {
+    const char *opcionesGuardado_ptr[] = {
+        "Guardar partida (reemplaza la anterior)",
+        "Continuar sin guardar"
+    };
+    printf("\n");
+    if (leerOpcionMenu(opcionesGuardado_ptr, 2) == 0) {
+        guardarProgreso(partida_ptr, numeroZona, fase);
+    }
+}
+
 // Despues de ganar un combate queda al menos un luchador en pie.
 static Personaje_t *elegirLuchadorVivo(Partida_t *partida_ptr) {
     int vivos[CANT_PERSONAJES];
@@ -144,23 +167,27 @@ static Personaje_t *elegirLuchadorVivo(Partida_t *partida_ptr) {
     return &partida_ptr->equipo[vivos[numeroAleatorio(0, cantVivos - 1)]];
 }
 
-// Juega todas las fases de la zona en orden: encuentro, combate y escena
-// post batalla. Pelean los primeros cantDesbloqueados del equipo, y lo que
-// les pasa en una fase (vida, estados) se arrastra a la siguiente.
+// Juega las fases de la zona en orden, desde faseInicial: encuentro, combate y
+// escena post batalla. Pelean los primeros cantDesbloqueados del equipo, y lo
+// que les pasa en una fase (vida, estados) se arrastra a la siguiente.
 // Devuelve 1 si superan la zona, 0 si caen en alguna fase.
-static int iniciarZona(const Zona_t *zona_ptr, Partida_t *partida_ptr) {
+static int iniciarZona(const Zona_t *zona_ptr, Partida_t *partida_ptr, int faseInicial) {
     Personaje_t *luchadores_ptr = partida_ptr->equipo;
     int cantLuchadores = partida_ptr->cantDesbloqueados;
 
-    // Entre una zona y la siguiente el equipo descansa.
-    recuperarEquipo(luchadores_ptr, cantLuchadores);
-    mostrarEntradaZona(zona_ptr);
-    for (int i = 0; i < zona_ptr->cantFases; i++) {
+    // Entre una zona y la siguiente el equipo descansa. Al retomar una partida
+    // se sigue en la fase guardada, que siempre empieza con su fogata.
+    if (faseInicial == 0) {
+        recuperarEquipo(luchadores_ptr, cantLuchadores);
+        mostrarEntradaZona(zona_ptr);
+    }
+    for (int i = faseInicial; i < zona_ptr->cantFases; i++) {
         const Fase_t *fase_ptr = &zona_ptr->fases[i];
 
         if (fase_ptr->fogataAntes) {
             descansarEnFogata(luchadores_ptr, cantLuchadores);
             mostrarDescansoZona(&luchadores_ptr[0], zona_ptr->numero);
+            ofrecerGuardado(partida_ptr, zona_ptr->numero, i);
         }
         mostrarEncuentroEnemigos(&luchadores_ptr[0], zona_ptr->recorrido, fase_ptr->amenaza);
 
@@ -233,17 +260,6 @@ static int recompensarJefe(Partida_t *partida_ptr, int numeroZona) {
     return 1;
 }
 
-static int guardarProgreso(const Partida_t *partida_ptr) {
-    int desbloqueados[CANT_PERSONAJES];
-    marcarDesbloqueados(partida_ptr, desbloqueados);
-    if (!guardarPartida(ARCHIVO_PARTIDA, partida_ptr->equipo, CANT_PERSONAJES,
-                        desbloqueados, &partida_ptr->inventario, &partida_ptr->progreso)) {
-        return 0;
-    }
-    printf("\nProgreso guardado.\n");
-    return 1;
-}
-
 static void terminarJuego(const Partida_t *partida_ptr) {
     mostrarCaidaSefirot(&partida_ptr->equipo[0]);
     mostrarEpilogo(&partida_ptr->equipo[0]);
@@ -253,11 +269,11 @@ static void terminarJuego(const Partida_t *partida_ptr) {
     pausar();
 }
 
-// Recorre todas las zonas hasta el final o la derrota.
-static void jugarZonas(Partida_t *partida_ptr) {
-    for (int numero = 1; numero <= CANT_ZONAS; numero++) {
+// Recorre las zonas desde el punto indicado hasta el final o la derrota.
+static void jugarDesde(Partida_t *partida_ptr, int zonaInicial, int faseInicial) {
+    for (int numero = zonaInicial; numero <= CANT_ZONAS; numero++) {
         Zona_t zona = crearZonaPorNumero(numero);
-        if (!iniciarZona(&zona, partida_ptr)) {
+        if (!iniciarZona(&zona, partida_ptr, numero == zonaInicial ? faseInicial : 0)) {
             return;
         }
         if (numero == CANT_ZONAS) {
@@ -267,10 +283,6 @@ static void jugarZonas(Partida_t *partida_ptr) {
             return;
         }
         mostrarEquipo(partida_ptr);
-        if (!guardarProgreso(partida_ptr)) {
-            pausar();
-            return;
-        }
         pausar();
     }
     terminarJuego(partida_ptr);
@@ -309,33 +321,37 @@ void jugarPartidaNueva(void) {
     mostrarNarrativaInicial(&partida.equipo[0]);
     mostrarSalidaDeRaiz(&partida.equipo[0]);
 
-    jugarZonas(&partida);
+    jugarDesde(&partida, 1, 0);
     cerrarPartida(&partida);
 }
 
-// Por ahora solo muestra lo guardado; retomar la historia se suma con el
-// guardado por ranuras.
-void mostrarPartidaGuardada(void) {
-    Personaje_t equipo[CANT_PERSONAJES];
+void continuarPartidaGuardada(void) {
+    Partida_t partida;
+    EstadoPartida_t estado;
     int desbloqueados[CANT_PERSONAJES];
-    Inventario_t inventario = crearInventario(0);
-    ProgresoPartida_t progreso = crearProgresoPartida();
-    if (!cargarPartida(ARCHIVO_PARTIDA, equipo, CANT_PERSONAJES,
-                       desbloqueados, &inventario, &progreso)) {
+    partida.inventario = crearInventario(0);
+    partida.progreso = crearProgresoPartida();
+    partida.estadisticas = (Estadisticas_t) { NULL, 0, 0 };
+    if (!cargarPartida(ARCHIVO_PARTIDA, &estado, partida.equipo, CANT_PERSONAJES,
+                       desbloqueados, &partida.inventario, &partida.progreso, &partida.estadisticas)) {
         printf("\nNo se pudo cargar la partida (no existe o el archivo es incompatible).\n");
         pausar();
         return;
     }
 
-    printf("\nPartida cargada:\n");
+    partida.modo = estado.modo;
+    partida.cantDesbloqueados = 0;
     for (int i = 0; i < CANT_PERSONAJES; i++) {
-        if (desbloqueados[i]) {
-            mostrarPersonaje(&equipo[i]);
-        }
+        partida.cantDesbloqueados += desbloqueados[i];
     }
-    mostrarInventario(&inventario);
+
+    printf("\nPartida cargada:\n");
+    mostrarEquipo(&partida);
     printf("Mejoras acumuladas: vida +%d, ataque +%d, defensa +%d.\n",
-           progreso.personajes.vidaMaxima, progreso.personajes.ataque,
-           progreso.personajes.defensa);
+           partida.progreso.personajes.vidaMaxima, partida.progreso.personajes.ataque,
+           partida.progreso.personajes.defensa);
     pausar();
+
+    jugarDesde(&partida, estado.zonaActual, estado.faseSiguiente);
+    cerrarPartida(&partida);
 }

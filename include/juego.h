@@ -5,7 +5,7 @@
 // todas las zonas y el final.
 void jugarPartidaNueva(void);
 
-// Carga la partida guardada y muestra el equipo, el inventario y las mejoras.
-void mostrarPartidaGuardada(void);
+// Carga la partida guardada y la continua desde la fogata donde se guardo.
+void continuarPartidaGuardada(void);
 
 #endif

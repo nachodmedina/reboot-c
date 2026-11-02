@@ -271,24 +271,36 @@ static void testGuardarYRecuperarInventarioCompartido(void) {
     int desbloqueados[3] = { 1, 1, 0 };
     Inventario_t inventario = crearInventario(2);
     ProgresoPartida_t progreso = crearProgresoPartida();
+    EstadoPartida_t estado = { MODO_DIFICIL, 3, 2 };
+    Estadisticas_t estadisticas = crearEstadisticas();
     progreso.personajes.ataque = 15;
     progreso.enemigos.vidaMaxima = 15;
     assert(agregarItem(&inventario, (Item_t) { ITEM_VIDA, 100 }));
     assert(agregarItem(&inventario, (Item_t) { ITEM_VENENO, 5 }));
+    assert(agregarRegistroRonda(&estadisticas, (RegistroRonda_t) { 3, 2, 1, 120, 40, 1 }));
 
-    assert(guardarPartida(ruta, equipo, 3, desbloqueados, &inventario, &progreso));
+    assert(guardarPartida(ruta, &estado, equipo, 3, desbloqueados, &inventario, &progreso, &estadisticas));
     assert(agregarItem(&inventario, (Item_t) { ITEM_VENENO, 5 }));
-    assert(guardarPartida(ruta, equipo, 3, desbloqueados, &inventario, &progreso));
+    assert(guardarPartida(ruta, &estado, equipo, 3, desbloqueados, &inventario, &progreso, &estadisticas));
     Inventario_t inventarioInvalido = inventario;
     inventarioInvalido.cantidad = inventarioInvalido.capacidad + 1;
-    assert(!guardarPartida(ruta, equipo, 3, desbloqueados, &inventarioInvalido, &progreso));
+    assert(!guardarPartida(ruta, &estado, equipo, 3, desbloqueados, &inventarioInvalido, &progreso, &estadisticas));
+    EstadoPartida_t estadoInvalido = { MODO_NORMAL, CANT_ZONAS + 1, 0 };
+    assert(!guardarPartida(ruta, &estadoInvalido, equipo, 3, desbloqueados, &inventario, &progreso, &estadisticas));
 
     Personaje_t equipoCargado[3];
     int desbloqueadosCargados[3] = { 0, 0, 0 };
     Inventario_t inventarioCargado = crearInventario(0);
     ProgresoPartida_t progresoCargado = crearProgresoPartida();
-    assert(cargarPartida(ruta, equipoCargado, 3, desbloqueadosCargados,
-                         &inventarioCargado, &progresoCargado));
+    EstadoPartida_t estadoCargado = { MODO_NORMAL, 1, 0 };
+    Estadisticas_t estadisticasCargadas = { NULL, 0, 0 };
+    assert(cargarPartida(ruta, &estadoCargado, equipoCargado, 3, desbloqueadosCargados,
+                         &inventarioCargado, &progresoCargado, &estadisticasCargadas));
+    assert(estadoCargado.modo == MODO_DIFICIL);
+    assert(estadoCargado.zonaActual == 3);
+    assert(estadoCargado.faseSiguiente == 2);
+    assert(estadisticasCargadas.cantidad == 1);
+    assert(estadisticasCargadas.registros_ptr[0].danoCausado == 120);
     assert(desbloqueadosCargados[0] == 1);
     assert(desbloqueadosCargados[1] == 1);
     assert(desbloqueadosCargados[2] == 0);
@@ -301,16 +313,42 @@ static void testGuardarYRecuperarInventarioCompartido(void) {
     assert(progresoCargado.enemigos.vidaMaxima == 15);
     assert(strcmp(equipoCargado[1].nombre, equipo[1].nombre) == 0);
 
+    // Una cantidad de registros imposible se rechaza sin tocar nada.
+    archivo_ptr = fopen(ruta, "r+b");
+    assert(archivo_ptr != NULL);
+    int cantidadInvalida = MAX_REGISTROS_RONDA + 1;
+    long posicionCantidad = -(long) (sizeof(int) + sizeof(RegistroRonda_t));
+    assert(fseek(archivo_ptr, posicionCantidad, SEEK_END) == 0);
+    assert(fwrite(&cantidadInvalida, sizeof(cantidadInvalida), 1, archivo_ptr) == 1);
+    assert(fclose(archivo_ptr) == 0);
+    assert(!cargarPartida(ruta, &estadoCargado, equipoCargado, 3, desbloqueadosCargados,
+                          &inventarioCargado, &progresoCargado, &estadisticasCargadas));
+    assert(estadisticasCargadas.cantidad == 1);
+
+    // Una cantidad valida sin sus registros (archivo cortado) tambien.
+    archivo_ptr = fopen(ruta, "r+b");
+    assert(archivo_ptr != NULL);
+    int cantidadSinDatos = 50;
+    assert(fseek(archivo_ptr, posicionCantidad, SEEK_END) == 0);
+    assert(fwrite(&cantidadSinDatos, sizeof(cantidadSinDatos), 1, archivo_ptr) == 1);
+    assert(fclose(archivo_ptr) == 0);
+    assert(!cargarPartida(ruta, &estadoCargado, equipoCargado, 3, desbloqueadosCargados,
+                          &inventarioCargado, &progresoCargado, &estadisticasCargadas));
+    assert(estadisticasCargadas.cantidad == 1);
+
     archivo_ptr = fopen(ruta, "wb");
     assert(archivo_ptr != NULL);
     assert(fwrite("RE", 1, 2, archivo_ptr) == 2);
     assert(fclose(archivo_ptr) == 0);
     strcpy(equipoCargado[0].nombre, "Sin cambios");
-    assert(!cargarPartida(ruta, equipoCargado, 3, desbloqueadosCargados,
-                          &inventarioCargado, &progresoCargado));
+    assert(!cargarPartida(ruta, &estadoCargado, equipoCargado, 3, desbloqueadosCargados,
+                          &inventarioCargado, &progresoCargado, &estadisticasCargadas));
     assert(strcmp(equipoCargado[0].nombre, "Sin cambios") == 0);
     assert(inventarioCargado.cantidad == 3);
+    assert(estadoCargado.zonaActual == 3);
     assert(remove(ruta) == 0);
+    liberarEstadisticas(&estadisticas);
+    liberarEstadisticas(&estadisticasCargadas);
 }
 
 // ============================================================
