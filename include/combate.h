@@ -3,6 +3,7 @@
 
 #include "personajes.h"
 #include "enemigos.h"
+#include "estadisticas.h"
 #include "items.h"
 
 #define MAX_ENEMIGOS_COMBATE 3   // enemigos vivos a la vez en un combate
@@ -81,7 +82,9 @@ int quedanEnemigosVivos(const Enemigo_t enemigos_ptr[], int cantEnemigos);
 
 // Combate interactivo por turnos. inventario puede ser NULL (sin items).
 // Los enemigos de batalla_ptr pierden vida durante la pelea: pasar una copia.
+// estadisticas_ptr puede ser NULL (sin registro de rondas).
 // Devuelve 1 si gana el equipo, 0 si pierde.
-int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Batalla_t *batalla_ptr, Inventario_t *inventario_ptr);
+int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Batalla_t *batalla_ptr, Inventario_t *inventario_ptr,
+                   Estadisticas_t *estadisticas_ptr, int zona, int fase);
 
 #endif

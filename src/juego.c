@@ -2,6 +2,7 @@
 #include "../include/juego.h"
 #include "../include/archivos.h"
 #include "../include/combate.h"
+#include "../include/estadisticas.h"
 #include "../include/historia.h"
 #include "../include/items.h"
 #include "../include/personajes.h"
@@ -18,6 +19,7 @@ typedef struct {
     int cantDesbloqueados;                // los primeros N del equipo ya se unieron
     Inventario_t inventario;
     ProgresoPartida_t progreso;
+    Estadisticas_t estadisticas;
 } Partida_t;
 
 // ============================================================
@@ -172,7 +174,8 @@ static int iniciarZona(const Zona_t *zona_ptr, Partida_t *partida_ptr) {
             return 0;
         }
 
-        if (!iniciarCombate(luchadores_ptr, cantLuchadores, &batalla, &partida_ptr->inventario)) {
+        if (!iniciarCombate(luchadores_ptr, cantLuchadores, &batalla, &partida_ptr->inventario,
+                            &partida_ptr->estadisticas, zona_ptr->numero, i + 1)) {
             printf("\n%s cae derrotado en %s...\n",
                    cantLuchadores == 1 ? luchadores_ptr[0].nombre : "El equipo", zona_ptr->nombre);
             if (partida_ptr->modo == MODO_DIFICIL) {
@@ -250,6 +253,40 @@ static void terminarJuego(const Partida_t *partida_ptr) {
     pausar();
 }
 
+// Recorre todas las zonas hasta el final o la derrota.
+static void jugarZonas(Partida_t *partida_ptr) {
+    for (int numero = 1; numero <= CANT_ZONAS; numero++) {
+        Zona_t zona = crearZonaPorNumero(numero);
+        if (!iniciarZona(&zona, partida_ptr)) {
+            return;
+        }
+        if (numero == CANT_ZONAS) {
+            break;   // despues de Sefirot no hay mejora: sigue el final
+        }
+        if (!recompensarJefe(partida_ptr, numero)) {
+            return;
+        }
+        mostrarEquipo(partida_ptr);
+        if (!guardarProgreso(partida_ptr)) {
+            pausar();
+            return;
+        }
+        pausar();
+    }
+    terminarJuego(partida_ptr);
+}
+
+// Fin de la partida, se gane o se pierda: muestra y registra las estadisticas
+// y libera su memoria. Es el unico lugar donde se liberan.
+static void cerrarPartida(Partida_t *partida_ptr) {
+    mostrarEstadisticas(&partida_ptr->estadisticas);
+    if (!guardarEstadisticas(&partida_ptr->estadisticas)) {
+        printf("No se pudieron guardar las estadisticas.\n");
+    }
+    liberarEstadisticas(&partida_ptr->estadisticas);
+    pausar();
+}
+
 // ============================================================
 // Funciones publicas
 // ============================================================
@@ -268,28 +305,12 @@ void jugarPartidaNueva(void) {
     partida.cantDesbloqueados = 1;
     partida.inventario = crearInventario(1);
     partida.progreso = crearProgresoPartida();
+    partida.estadisticas = crearEstadisticas();
     mostrarNarrativaInicial(&partida.equipo[0]);
     mostrarSalidaDeRaiz(&partida.equipo[0]);
 
-    for (int numero = 1; numero <= CANT_ZONAS; numero++) {
-        Zona_t zona = crearZonaPorNumero(numero);
-        if (!iniciarZona(&zona, &partida)) {
-            return;
-        }
-        if (numero == CANT_ZONAS) {
-            break;   // despues de Sefirot no hay mejora: sigue el final
-        }
-        if (!recompensarJefe(&partida, numero)) {
-            return;
-        }
-        mostrarEquipo(&partida);
-        if (!guardarProgreso(&partida)) {
-            pausar();
-            return;
-        }
-        pausar();
-    }
-    terminarJuego(&partida);
+    jugarZonas(&partida);
+    cerrarPartida(&partida);
 }
 
 // Por ahora solo muestra lo guardado; retomar la historia se suma con el
