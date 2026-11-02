@@ -7,14 +7,14 @@
 #define AREA_BONUS                 15
 #define DURACION_HABILIDAD          2
 #define CRITICO_GRUPAL_PORCENTAJE 120   // Isaac: x1.2
-#define DEFENSA_GRUPAL_PORCENTAJE 150   // Dante: +50% de defensa
+#define DEFENSA_GRUPAL_PORCENTAJE 140   // Dante: +50% de defensa
 #define CURACION_GRUPAL            40   // Frieren: HP por curacion
 #define DEBILITADO_REDUCCION       25   // % de ataque que se pierde
 #define DEBILITADO_DURACION         1
 #define TRAMPA_CHANCE              40   // % de probabilidad
 #define CRITICO_ENEMIGO_CHANCE     30   // % de probabilidad
 #define CRITICO_ENEMIGO_PORCENTAJE 150  // x1.5
-#define MITAD_DANO_PORCENTAJE      50   // Vergil: recibe la mitad
+#define MITAD_DANO_PORCENTAJE      40   // Vergil: recibe la mitad
 #define REGENERACION_VIDA          30   // Tiny: vida por turno
 #define ATURDIR_CHANCE             25   // Golem: % de probabilidad
 #define ATURDIR_DURACION            1

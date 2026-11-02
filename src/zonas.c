@@ -40,7 +40,7 @@ static int agregarFase(Zona_t *zona_ptr, const char *amenaza_ptr, const Enemigo_
 // ============================================================
 
 static Enemigo_t crearCentinela(void) {
-    return crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 8, 48);
+    return crearEnemigo("Centinela Canino", HABILIDAD_ENEMIGO_NINGUNA, 120, 10, 48);
 }
 
 static Enemigo_t crearCazador(void) {
@@ -71,7 +71,7 @@ static Zona_t crearZonaCampoCeniza(void) {
 
     // Fase del jefe: antes se descansa en una fogata.
     Enemigo_t fase4[] = { cazador, spectre };
-    agregarFase(&zona, "una figura enorme avanza detras de un cazador: es Spectre.",
+    agregarFase(&zona, "En el centro del pueblo esta su lider: es Spectre.",
                 fase4, 2, 1);
 
     return zona;
@@ -82,22 +82,22 @@ static Zona_t crearZonaCampoCeniza(void) {
 // ============================================================
 
 static Enemigo_t crearEscudero(void) {
-    return crearEnemigo("Escudero", HABILIDAD_ENEMIGO_NINGUNA, 150, 24, 58);
+    return crearEnemigo("Escudero", HABILIDAD_ENEMIGO_NINGUNA, 150, 20, 50);
 }
 
 static Enemigo_t crearGuardian(void) {
-    return crearEnemigo("Guardián", HABILIDAD_ENEMIGO_NINGUNA, 150, 20, 64);
+    return crearEnemigo("Guardián", HABILIDAD_ENEMIGO_NINGUNA, 200, 26, 64);
 }
 
 static Zona_t crearZonaCatedral(void) {
     Zona_t zona = crearZona(2, "Catedral de Engranajes",
-        "Una catedral levantada con engranajes y chatarra. Adentro, los conversos\n"
-        "le rezan a las maquinas y custodian a los que se niegan a iluminarse.",
-        "entre las naves de la Catedral");
+        "Una catedral levantada con engranajes y chatarra. \n"
+        "Adentro, los protectores de la fe que le rezan a las maquinas",
+        "y castigan a los que se niegan a iluminarse.");
 
     Enemigo_t escudero = crearEscudero();
     Enemigo_t guardian = crearGuardian();
-    Enemigo_t vergil = crearJefe("Vergil", HABILIDAD_ENEMIGO_MITAD_DANO, 380, 30, 80);
+    Enemigo_t vergil = crearJefe("Vergil", HABILIDAD_ENEMIGO_MITAD_DANO, 380, 36, 80);
 
     Enemigo_t fase1[] = { escudero, escudero };
     agregarFase(&zona, "dos escuderos conversos cierran el paso con sus escudos remachados.",
@@ -123,7 +123,7 @@ static Zona_t crearZonaCatedral(void) {
 // ============================================================
 
 static Enemigo_t crearMutante(void) {
-    return crearEnemigo("Mutante", HABILIDAD_ENEMIGO_NINGUNA, 190, 20, 82);
+    return crearEnemigo("Mutante", HABILIDAD_ENEMIGO_NINGUNA, 190, 24, 64);
 }
 
 static Enemigo_t crearGolem(void) {
@@ -149,11 +149,11 @@ static Zona_t crearZonaFundicion(void) {
                 fase2, 2, 0);
 
     Enemigo_t fase3[] = { golem, mutante, mutante };
-    agregarFase(&zona, "un golem y dos mutantes bloquean la pasarela que cruza sobre el metal fundido.",
+    agregarFase(&zona, "un golem y dos mutantes bloquean la puerta al centro de la fundicion.",
                 fase3, 3, 0);
 
     Enemigo_t fase4[] = { golem, golem, tiny };
-    agregarFase(&zona, "al fondo, Tiny se levanta entre dos golems: cada abolladura se le cierra sola.",
+    agregarFase(&zona, "En el centro de la fundicion. Tiny, un robot de 2 metros capaz de destruir todo a su paso",
                 fase4, 3, 1);
 
     return zona;
@@ -182,7 +182,7 @@ static Zona_t crearZonaNucleo(void) {
     agregarFase(&zona, "piezas de la Fundicion se arman solas delante del equipo: un golem y dos mutantes.",
                 restosFundicion, 3, 0);
 
-    Enemigo_t jefeFinal[] = { crearJefe("Sefirot", HABILIDAD_ENEMIGO_SEFIROT, 820, 42, 100) };
+    Enemigo_t jefeFinal[] = { crearJefe("Sefirot", HABILIDAD_ENEMIGO_SEFIROT, 1000, 50, 100) };
     agregarFase(&zona, "en el centro del Nucleo, Sefirot abre los ojos. Los estaba esperando.",
                 jefeFinal, 1, 1);
 
