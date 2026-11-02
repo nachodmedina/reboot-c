@@ -16,6 +16,7 @@
 #endif
 #include "../include/archivos.h"
 #include "../include/combate.h"
+#include "../include/estadisticas.h"
 #include "../include/items.h"
 #include "../include/progresion.h"
 #include "../include/zonas.h"
@@ -313,6 +314,39 @@ static void testGuardarYRecuperarInventarioCompartido(void) {
 }
 
 // ============================================================
+// Estadisticas
+// ============================================================
+
+static void testEstadisticasCrecenSinPerderDatos(void) {
+    Estadisticas_t estadisticas = crearEstadisticas();
+    int capacidadInicial = estadisticas.capacidad;
+    assert(estadisticas.registros_ptr != NULL);
+    assert(capacidadInicial > 0);
+
+    int cantidad = capacidadInicial * 3 + 1;
+    for (int i = 0; i < cantidad; i++) {
+        assert(agregarRegistroRonda(&estadisticas, (RegistroRonda_t) { 1, 1, i + 1, i * 2, i, 0 }));
+    }
+    assert(estadisticas.cantidad == cantidad);
+    assert(estadisticas.capacidad >= cantidad);
+    assert(estadisticas.capacidad > capacidadInicial);
+    for (int i = 0; i < cantidad; i++) {
+        assert(estadisticas.registros_ptr[i].ronda == i + 1);
+        assert(estadisticas.registros_ptr[i].danoCausado == i * 2);
+    }
+
+    liberarEstadisticas(&estadisticas);
+    assert(estadisticas.registros_ptr == NULL);
+    assert(estadisticas.cantidad == 0);
+    assert(estadisticas.capacidad == 0);
+
+    // Despues de liberar se puede volver a usar: realloc de NULL reserva.
+    assert(agregarRegistroRonda(&estadisticas, (RegistroRonda_t) { 1, 1, 1, 10, 5, 0 }));
+    assert(estadisticas.cantidad == 1);
+    liberarEstadisticas(&estadisticas);
+}
+
+// ============================================================
 // Habilidades de enemigos de las zonas 2 a 4
 // ============================================================
 
@@ -599,6 +633,7 @@ int main(int argc, char *argv_ptr[]) {
     testCapacidadBolsaCompartida();
     testVenenoDuraCuatroTurnosYSeRenueva();
     testGuardarYRecuperarInventarioCompartido();
+    testEstadisticasCrecenSinPerderDatos();
     testMitadDeDano();
     testRegeneracionSinPasarElMaximo();
     testAturdirDuraUnTurno();
