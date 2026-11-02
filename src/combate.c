@@ -7,14 +7,14 @@
 #define AREA_BONUS                 15
 #define DURACION_HABILIDAD          2
 #define CRITICO_GRUPAL_PORCENTAJE 120   // Isaac: x1.2
-#define DEFENSA_GRUPAL_PORCENTAJE 140   // Dante: +50% de defensa
+#define DEFENSA_GRUPAL_PORCENTAJE 140   // Dante: +40% de defensa
 #define CURACION_GRUPAL            40   // Frieren: HP por curacion
 #define DEBILITADO_REDUCCION       25   // % de ataque que se pierde
 #define DEBILITADO_DURACION         1
 #define TRAMPA_CHANCE              40   // % de probabilidad
 #define CRITICO_ENEMIGO_CHANCE     30   // % de probabilidad
 #define CRITICO_ENEMIGO_PORCENTAJE 150  // x1.5
-#define MITAD_DANO_PORCENTAJE      40   // Vergil: recibe la mitad
+#define MITAD_DANO_PORCENTAJE      50   // Vergil: recibe la mitad
 #define REGENERACION_VIDA          30   // Tiny: vida por turno
 #define ATURDIR_CHANCE             25   // Golem: % de probabilidad
 #define ATURDIR_DURACION            1
@@ -23,6 +23,11 @@
 #define SEFIROT_INVOCAR_CHANCE     20
 #define SEFIROT_AREA_PORCENTAJE    75   // el area pega el 75% de su ataque
 #define SEFIROT_CURACION           80
+
+// Lo que va pasando en la ronda actual, para registrarlo cuando termina.
+static int danoCausadoRonda = 0;
+static int danoRecibidoRonda = 0;
+static int enemigosDerrotadosRonda = 0;
 
 static void imprimirNombreCombate(const char *color_ptr, const char *nombre_ptr) {
     printf("%s%s%s%s", estiloTerminal(color_ptr), estiloTerminal(ESTILO_NEGRITA),
@@ -80,14 +85,17 @@ static void recibirDanoEnemigo(Enemigo_t *objetivo_ptr, int dano) {
         imprimirMensajeCombate(colorNombreEnemigo(objetivo_ptr), objetivo_ptr->nombre,
                                "absorbe la mitad del golpe.");
     }
+    int vidaAntes = objetivo_ptr->vida;
     objetivo_ptr->vida -= dano;
     if (objetivo_ptr->vida < 0) {
         objetivo_ptr->vida = 0;
     }
+    danoCausadoRonda += vidaAntes - objetivo_ptr->vida;
     imprimirNombreCombate(colorNombreEnemigo(objetivo_ptr), objetivo_ptr->nombre);
     printf(" recibe %d de dano (vida %d/%d)%s\n", dano, objetivo_ptr->vida,
            objetivo_ptr->vidaMax, estiloTerminal(COLOR_RESET));
     if (!estaVivoEnemigo(objetivo_ptr)) {
+        enemigosDerrotadosRonda++;
         imprimirMensajeCombate(colorNombreEnemigo(objetivo_ptr), objetivo_ptr->nombre,
                                "fue derrotado.");
     }
@@ -193,10 +201,12 @@ static int defensaEfectiva(const Personaje_t *personaje_ptr, EfectoGrupal_t efec
 }
 
 static void recibirDanoPersonaje(Personaje_t *objetivo_ptr, int dano) {
+    int vidaAntes = objetivo_ptr->vida;
     objetivo_ptr->vida -= dano;
     if (objetivo_ptr->vida < 0) {
         objetivo_ptr->vida = 0;
     }
+    danoRecibidoRonda += vidaAntes - objetivo_ptr->vida;
     imprimirNombreCombate(COLOR_VERDE, objetivo_ptr->nombre);
     printf(" recibe %d de dano (vida %d/%d)%s\n", dano, objetivo_ptr->vida,
            objetivo_ptr->vidaMax, estiloTerminal(COLOR_RESET));
@@ -345,7 +355,12 @@ void faseEnemigos(Batalla_t *batalla_ptr, Personaje_t equipo_ptr[], int cantPers
         } else {
             turnoEnemigo(enemigo_ptr, equipo_ptr, cantPersonajes, efecto);
         }
+        int vidaAntes = enemigo_ptr->vida;
         actualizarEstadoEnemigo(enemigo_ptr);
+        danoCausadoRonda += vidaAntes - enemigo_ptr->vida;
+        if (vidaAntes > 0 && !estaVivoEnemigo(enemigo_ptr)) {
+            enemigosDerrotadosRonda++;
+        }
     }
 }
 
@@ -536,9 +551,27 @@ static int terminarCombate(int gano) {
     return gano;
 }
 
-int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Batalla_t *batalla_ptr, Inventario_t *inventario_ptr) {
+// Guarda lo que paso en la ronda y deja los contadores listos para la siguiente.
+static void registrarRonda(Estadisticas_t *estadisticas_ptr, int zona, int fase, int ronda) {
+    if (estadisticas_ptr != NULL) {
+        RegistroRonda_t registro = { zona, fase, ronda, danoCausadoRonda, danoRecibidoRonda, enemigosDerrotadosRonda };
+        if (!agregarRegistroRonda(estadisticas_ptr, registro)) {
+            printf("No hay memoria para registrar la ronda; las estadisticas quedan incompletas.\n");
+        }
+    }
+    danoCausadoRonda = 0;
+    danoRecibidoRonda = 0;
+    enemigosDerrotadosRonda = 0;
+}
+
+int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Batalla_t *batalla_ptr, Inventario_t *inventario_ptr,
+                   Estadisticas_t *estadisticas_ptr, int zona, int fase) {
     EfectoGrupal_t efecto = crearEfectoGrupal();
     int ronda = 1;
+
+    danoCausadoRonda = 0;
+    danoRecibidoRonda = 0;
+    enemigosDerrotadosRonda = 0;
 
     while (1) {
         limpiarPantallaTerminal();
@@ -559,14 +592,18 @@ int iniciarCombate(Personaje_t equipo_ptr[], int cantPersonajes, Batalla_t *bata
                 turnoPersonaje(equipo_ptr, cantPersonajes, i, batalla_ptr->enemigos, batalla_ptr->cantEnemigos,
                                inventario_ptr, &efecto);
             }
+            int vidaAntes = equipo_ptr[i].vida;
             actualizarEstadoPersonaje(&equipo_ptr[i]);
+            danoRecibidoRonda += vidaAntes - equipo_ptr[i].vida;
         }
         if (!quedanEnemigosVivos(batalla_ptr->enemigos, batalla_ptr->cantEnemigos)) {
+            registrarRonda(estadisticas_ptr, zona, fase, ronda);
             return terminarCombate(1);
         }
 
         printf("\n");
         faseEnemigos(batalla_ptr, equipo_ptr, cantPersonajes, efecto);
+        registrarRonda(estadisticas_ptr, zona, fase, ronda);
         if (!quedanPersonajesVivos(equipo_ptr, cantPersonajes)) {
             return terminarCombate(0);
         }

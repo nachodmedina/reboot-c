@@ -61,10 +61,19 @@ envenena, una planta medicinal, pociones o veneno para la bolsa, o un robot de a
 
 Después de los jefes de las Zonas 1 a 3 el equipo elige una **mejora** (vida, ataque o
 defensa) y Sefirot responde dándoles a los enemigos de las zonas siguientes un
-**contrabonus**. La partida se guarda en `partida.dat` al terminar cada zona.
+**contrabonus**.
+
+Después de cada fogata el juego ofrece **guardar la partida**. Hay una sola ranura,
+`partida.dat`: guardar reemplaza lo anterior. "Cargar partida" retoma desde esa fogata,
+con el equipo, el inventario, las mejoras y las estadísticas tal como estaban.
 
 Si el equipo cae en combate, la partida termina. En **Modo Difícil**, además, se borra la
 partida guardada (permadeath).
+
+Al terminar la partida, se gane o se pierda, se muestran las **estadísticas**: rondas
+jugadas, daño causado y recibido, enemigos derrotados, mejor ronda y combate más largo. El
+resumen se agrega a `estadisticas.log`. Se registra una entrada por ronda en un arreglo
+dinámico (`malloc` y `realloc`), porque la cantidad de rondas depende de cómo se juegue.
 
 ### Personajes
 
@@ -131,9 +140,6 @@ Zonas 2 a 4 se ganan en alrededor del 90% de las corridas y el equipo termina co
 
 ### Pendiente
 
-- **Guardado completo**: hoy se guarda el equipo al terminar cada zona, pero "Cargar
-  partida" solo muestra lo guardado. El guardado entre fases con ranuras está en la rama
-  `feature/guardado-ranuras`.
 - **Stats propias** para cada personaje.
 
 ## Presentacion en terminal
@@ -178,6 +184,7 @@ ASCII de los personajes y sus armas estan en `src/arte_ascii.c` (`arteIsaac_ptr`
   - `progresion` — mejoras, contrabonus y qué aliado se une en cada zona.
   - `items` — ítems e inventario compartido.
   - `archivos` — guardado, carga, borrado de partida (modo difícil) y log en archivo.
+  - `estadisticas` — registro de rondas en memoria dinámica, totales y `estadisticas.log`.
   - `arte_ascii` — dibujos de personajes y armas.
   - `utils` — random, pausas, lectura validada de menús, cuadros de texto y colores ANSI.
 - `tests/test_combate.c` — tests unitarios del combate, los ítems y el guardado, y la
@@ -188,3 +195,4 @@ Archivos que genera el juego al correr (ignorados por git):
 
 - `partida.dat` — partida guardada (binario).
 - `juego.log` — registro de eventos (combates ganados/perdidos, partida guardada, etc.).
+- `estadisticas.log` — resumen de cada partida terminada.
