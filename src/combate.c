@@ -320,7 +320,7 @@ static void turnoSefirot(Batalla_t *batalla_ptr, int indice, Personaje_t equipo_
         ataqueAreaSefirot(sefirot_ptr, equipo_ptr, cantPersonajes, efecto);
         return;
     }
-    tirada -= SEFIROT_AREA_CHANCE;
+    tirada -= SEFIROT_AREA_CHANCE; 
     if (tirada <= SEFIROT_CURACION_CHANCE && sefirot_ptr->vida < sefirot_ptr->vidaMax) {
         curarSefirot(sefirot_ptr);
         return;

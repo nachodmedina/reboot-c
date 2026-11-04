@@ -215,7 +215,8 @@ static int iniciarZona(const Zona_t *zona_ptr, Partida_t *partida_ptr, int faseI
 
         if (i + 1 < zona_ptr->cantFases && !zona_ptr->fases[i + 1].fogataAntes) {
             mostrarPostBatalla(&luchadores_ptr[0]);
-            eventoEntreFases(elegirLuchadorVivo(partida_ptr), &partida_ptr->inventario);
+            eventoEntreFases(partida_ptr->equipo, cantLuchadores, elegirLuchadorVivo(partida_ptr),
+                             &partida_ptr->inventario);
         }
     }
     return 1;

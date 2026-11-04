@@ -47,8 +47,9 @@ void mostrarCaidaSefirot(const Personaje_t *protagonista_ptr);
 void mostrarEpilogo(const Personaje_t *protagonista_ptr);
 void mostrarFinDelJuego(void);
 
-// Evento aleatorio entre fases consecutivas: puede dar objetos, envenenar,
-// curar o mejorar al personaje.
-void eventoEntreFases(Personaje_t *personaje_ptr, Inventario_t *inventario_ptr);
+// Evento aleatorio entre fases consecutivas: puede dar objetos, afectar al
+// personaje elegido o mejorar a todo el equipo desbloqueado.
+void eventoEntreFases(Personaje_t equipo_ptr[], int cantPersonajes, Personaje_t *personaje_ptr,
+                      Inventario_t *inventario_ptr);
 
 #endif

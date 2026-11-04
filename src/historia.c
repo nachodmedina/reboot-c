@@ -472,7 +472,8 @@ void mostrarFinDelJuego(void) {
         COLOR_BLANCO, COLOR_AMARILLO, ESTILO_NEGRITA);
 }
 
-void eventoEntreFases(Personaje_t *personaje_ptr, Inventario_t *inventario_ptr) {
+void eventoEntreFases(Personaje_t equipo_ptr[], int cantPersonajes, Personaje_t *personaje_ptr,
+                      Inventario_t *inventario_ptr) {
     char textoEvento[500];
 
     switch (numeroAleatorio(0, 8)) {
@@ -545,21 +546,23 @@ void eventoEntreFases(Personaje_t *personaje_ptr, Inventario_t *inventario_ptr) 
                              "escombros. \"Sobreviviente detectado. Preparando "
                              "asistencia.\" El robot ofrece dos frascos de veneno.");
                     break;
-                case 3:
-                    personaje_ptr->vidaMax += 10;
-                    personaje_ptr->vida += 10;
-                    personaje_ptr->ataque += 10;
-                    personaje_ptr->defensa += 10;
+                case 3: {
+                    for (int i = 0; i < cantPersonajes; i++) {
+                        equipo_ptr[i].vidaMax += 10;
+                        if (equipo_ptr[i].vida > 0) {
+                            equipo_ptr[i].vida += 10;
+                        }
+                        equipo_ptr[i].ataque += 10;
+                        equipo_ptr[i].defensa += 10;
+                    }
                     snprintf(textoEvento, sizeof(textoEvento),
                              "Un pequeno robot de apoyo emerge de entre los "
                              "escombros. \"Sobreviviente detectado. Preparando "
-                             "asistencia.\" Calibra el equipo y refuerza el cuerpo "
-                             "de %s.\nVida maxima +10, ataque +10 y defensa +10.\n"
-                             "Ahora tiene %d/%d de vida, %d de ataque y %d de defensa.",
-                             personaje_ptr->nombre, personaje_ptr->vida,
-                             personaje_ptr->vidaMax, personaje_ptr->ataque,
-                             personaje_ptr->defensa);
+                             "asistencia.\" Calibra y refuerza a todo el equipo.\n"
+                             "Cada integrante recibe +10 de vida maxima, ataque y defensa. "
+                             "Los que siguen en pie recuperan ademas 10 de vida.");
                     break;
+                }
             }
             mostrarTextoEnCaja(NULL, textoEvento, COLOR_BLANCO);
             break;
