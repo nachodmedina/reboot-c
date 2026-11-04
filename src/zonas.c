@@ -50,7 +50,7 @@ static Enemigo_t crearCazador(void) {
 static Zona_t crearZonaCampoCeniza(void) {
     Zona_t zona = crearZona(1, "Campo Ceniza",
         "Lo que fue un pueblo agricola es hoy tierra quemada, vigilada por\n"
-        "cazadores al servicio de las maquinas y sus perros mecanicos.",
+        "cazadores y sus perros mecanicos al servicio de las maquinas.",
         "entre las ruinas del pueblo");
 
     Enemigo_t centinela = crearCentinela();
@@ -92,8 +92,9 @@ static Enemigo_t crearGuardian(void) {
 static Zona_t crearZonaCatedral(void) {
     Zona_t zona = crearZona(2, "Catedral de Engranajes",
         "Una catedral levantada con engranajes y chatarra. \n"
-        "Adentro, los protectores de la fe que le rezan a las maquinas",
-        "y castigan a los que se niegan a iluminarse.");
+        "Adentro, los protectores de la fe que le rezan a las maquinas\n"
+        "y castigan a los que se niegan a iluminarse.",
+        "entre la catedral abandona");
 
     Enemigo_t escudero = crearEscudero();
     Enemigo_t guardian = crearGuardian();

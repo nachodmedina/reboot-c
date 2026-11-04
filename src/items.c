@@ -24,7 +24,7 @@ void describirItem(const Item_t *item_ptr, char texto_ptr[], size_t tamanio) {
 }
 
 Inventario_t crearInventario(int cantPersonajesDesbloqueados) {
-    Inventario_t inventario = { { { ITEM_VIDA, 0 } }, 0, 0 };
+    Inventario_t inventario = {0};
     actualizarCapacidadInventario(&inventario, cantPersonajesDesbloqueados);
     return inventario;
 }

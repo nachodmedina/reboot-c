@@ -5,7 +5,7 @@
 #include "enemigos.h"
 #include "personajes.h"
 
-#define SLOTS_POR_PERSONAJE 5
+#define SLOTS_POR_PERSONAJE 3
 #define MAX_PERSONAJES_INVENTARIO 3
 #define MAX_SLOTS_INVENTARIO (SLOTS_POR_PERSONAJE * MAX_PERSONAJES_INVENTARIO)
 #define DURACION_VENENO_ITEM 4   // turnos que dura el veneno de una pocion

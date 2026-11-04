@@ -175,7 +175,7 @@ void mostrarEncuentroEnemigos(const Personaje_t *personaje_ptr, const char *reco
                               const char *amenaza_ptr) {
     char textoNarrativa[600];
     snprintf(textoNarrativa, sizeof(textoNarrativa),
-        "Mientras %s avanza %s, un sonido metalico y "
+        "Mientras %s avanza ,%s un sonido metalico y "
         "extraño rompe el silencio. No hay tiempo para pensar: %s",
         personaje_ptr->nombre, recorrido_ptr, amenaza_ptr);
     mostrarTextoEnCaja(NULL, textoNarrativa, COLOR_BLANCO);
@@ -494,7 +494,7 @@ void eventoEntreFases(Personaje_t *personaje_ptr, Inventario_t *inventario_ptr) 
             break;
         case 4:
         case 5:
-            agregarRecompensa(inventario_ptr, ITEM_VENENO, 5);
+            agregarRecompensa(inventario_ptr, ITEM_VENENO, 10);
             snprintf(textoEvento, sizeof(textoEvento),
                      "%s descubre un frasco de veneno entre los escombros.",
                      personaje_ptr->nombre);
