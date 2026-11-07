@@ -3,6 +3,26 @@
 #include "../include/historia.h"
 #include "../include/utils.h"
 
+typedef enum {
+    EVENTO_SILENCIO_1,
+    EVENTO_SILENCIO_2,
+    EVENTO_POCION_VIDA_1,
+    EVENTO_POCION_VIDA_2,
+    EVENTO_POCION_VENENO_1,
+    EVENTO_POCION_VENENO_2,
+    EVENTO_NUBE_TOXICA,
+    EVENTO_PLANTA_MEDICINAL,
+    EVENTO_ROBOT_APOYO,
+    EVENTO_PRIMERO = EVENTO_SILENCIO_1,
+    EVENTO_ULTIMO = EVENTO_ROBOT_APOYO
+} ResultadoEvento_t;
+
+typedef enum {
+    ROBOT_OFRECE_VIDA = 1,
+    ROBOT_OFRECE_VENENO,
+    ROBOT_MEJORA_EQUIPO
+} OfertaRobot_t;
+
 static void agregarRecompensa(Inventario_t *inventario_ptr, TipoItem tipo, int valor) {
     Item_t item = { tipo, valor };
     if (!agregarItem(inventario_ptr, item)) {
@@ -476,32 +496,32 @@ void eventoEntreFases(Personaje_t equipo_ptr[], int cantPersonajes, Personaje_t 
                       Inventario_t *inventario_ptr) {
     char textoEvento[500];
 
-    switch (numeroAleatorio(0, 8)) {
-        case 0:
-        case 1:
+    switch (numeroAleatorio(EVENTO_PRIMERO, EVENTO_ULTIMO)) {
+        case EVENTO_SILENCIO_1:
+        case EVENTO_SILENCIO_2:
             snprintf(textoEvento, sizeof(textoEvento),
                      "%s sigue avanzando entre las ruinas. Algo llama su atencion, "
                      "pero no era nada. El camino sigue en silencio.",
                      personaje_ptr->nombre);
             mostrarTextoEnCaja(NULL, textoEvento, COLOR_BLANCO);
             break;
-        case 2:
-        case 3:
+        case EVENTO_POCION_VIDA_1:
+        case EVENTO_POCION_VIDA_2:
             agregarRecompensa(inventario_ptr, ITEM_VIDA, 100);
             snprintf(textoEvento, sizeof(textoEvento),
                      "%s encuentra una pocion de curacion entre los restos.",
                      personaje_ptr->nombre);
             mostrarTextoEnCaja(NULL, textoEvento, COLOR_BLANCO);
             break;
-        case 4:
-        case 5:
+        case EVENTO_POCION_VENENO_1:
+        case EVENTO_POCION_VENENO_2:
             agregarRecompensa(inventario_ptr, ITEM_VENENO, 10);
             snprintf(textoEvento, sizeof(textoEvento),
                      "%s descubre un frasco de veneno entre los escombros.",
                      personaje_ptr->nombre);
             mostrarTextoEnCaja(NULL, textoEvento, COLOR_BLANCO);
             break;
-        case 6: {
+        case EVENTO_NUBE_TOXICA: {
             Estado_t veneno = { ESTADO_VENENO, 2, 10 };
             aplicarEstadoPersonaje(personaje_ptr, veneno);
             snprintf(textoEvento, sizeof(textoEvento),
@@ -511,7 +531,7 @@ void eventoEntreFases(Personaje_t equipo_ptr[], int cantPersonajes, Personaje_t 
             mostrarTextoEnCaja(NULL, textoEvento, COLOR_BLANCO);
             break;
         }
-        case 7:
+        case EVENTO_PLANTA_MEDICINAL:
             if (personaje_ptr->estadoActivo.tipo == ESTADO_VENENO) {
                 personaje_ptr->estadoActivo.tipo = ESTADO_NINGUNO;
                 personaje_ptr->estadoActivo.duracionTurnos = 0;
@@ -528,9 +548,9 @@ void eventoEntreFases(Personaje_t equipo_ptr[], int cantPersonajes, Personaje_t 
             }
             mostrarTextoEnCaja(NULL, textoEvento, COLOR_BLANCO);
             break;
-        case 8:
-            switch (numeroAleatorio(1, 3)) {
-                case 1:
+        case EVENTO_ROBOT_APOYO:
+            switch (numeroAleatorio(ROBOT_OFRECE_VIDA, ROBOT_MEJORA_EQUIPO)) {
+                case ROBOT_OFRECE_VIDA:
                     agregarRecompensa(inventario_ptr, ITEM_VIDA, 100);
                     agregarRecompensa(inventario_ptr, ITEM_VIDA, 100);
                     snprintf(textoEvento, sizeof(textoEvento),
@@ -538,7 +558,7 @@ void eventoEntreFases(Personaje_t equipo_ptr[], int cantPersonajes, Personaje_t 
                              "escombros. \"Sobreviviente detectado. Preparando "
                              "asistencia.\" El robot ofrece dos pociones de curacion.");
                     break;
-                case 2:
+                case ROBOT_OFRECE_VENENO:
                     agregarRecompensa(inventario_ptr, ITEM_VENENO, 5);
                     agregarRecompensa(inventario_ptr, ITEM_VENENO, 5);
                     snprintf(textoEvento, sizeof(textoEvento),
@@ -546,7 +566,7 @@ void eventoEntreFases(Personaje_t equipo_ptr[], int cantPersonajes, Personaje_t 
                              "escombros. \"Sobreviviente detectado. Preparando "
                              "asistencia.\" El robot ofrece dos frascos de veneno.");
                     break;
-                case 3: {
+                case ROBOT_MEJORA_EQUIPO: {
                     for (int i = 0; i < cantPersonajes; i++) {
                         equipo_ptr[i].vidaMax += 10;
                         if (equipo_ptr[i].vida > 0) {

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "../include/juego.h"
+#include "../include/menu.h"
 #include "../include/utils.h"
 
 int main(void) {
@@ -16,20 +17,20 @@ int main(void) {
         printf("\n%s%s===== Reboot C =====%s\n\n",
                estiloTerminal(COLOR_MAGENTA), estiloTerminal(ESTILO_NEGRITA),
                estiloTerminal(COLOR_RESET));
-        opcion = leerOpcionMenu(opcionesMenu_ptr, 3);
+        opcion = leerOpcionMenu(opcionesMenu_ptr, CANT_OPCIONES_MENU);
 
         switch (opcion) {
-            case 0:
+            case MENU_NUEVA_PARTIDA:
                 jugarPartidaNueva();
                 break;
-            case 1:
+            case MENU_CARGAR_PARTIDA:
                 continuarPartidaGuardada();
                 break;
-            case 2:
+            case MENU_SALIR:
                 printf("\nHasta la proxima.\n");
                 break;
         }
-    } while (opcion != 2);
+    } while (opcion != MENU_SALIR);
 
     return 0;
 }
